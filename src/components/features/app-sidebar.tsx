@@ -29,15 +29,7 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { usePathname } from 'next/navigation'
-
-// Sample data
-const data = {
-    user: {
-        name: "Kristoffer Taag",
-        authorization: "Trader",
-        avatar: "query-display-picture-of-user",
-    },
-}
+import { sampleUser } from "@/mock-data/sample-user"
 
 // Menu items
 const traderGroupItems = [
@@ -91,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <NavUser user={data.user} />
+                <NavUser user={sampleUser.user} />
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
@@ -123,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             const isActive = pathname
                                 ? pathname.startsWith(item.url) ||
                                 item.items?.some((subItem) => pathname.startsWith(subItem.url))
-                                : true; // Open by default if pathname is unavailable
+                                : true;
                             return (
                                 <Collapsible
                                     key={item.title}
