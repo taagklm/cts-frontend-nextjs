@@ -57,3 +57,10 @@ turbo/
 # Misc
 *.log
 *.tsbuildinfo
+
+# -------------------------------------
+# ESLint
+.eslintcache
+.eslintrc.js
+.eslintrc.json
+.eslintrc.yml
