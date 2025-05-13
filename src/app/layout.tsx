@@ -1,17 +1,19 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/features/app-sidebar";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: "../fonts/GeistVF.woff",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+  weight: "100 900",
+})
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "../fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  weight: "100 900",
+})
 
 export default function RootLayout({
   children,
@@ -21,7 +23,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
+      className={`font-sans ${geistSans.variable} ${geistMono.variable} antialiased`} >
       <body className="antialiased min-h-screen w-full flex">
         <SidebarProvider>
           <AppSidebar />

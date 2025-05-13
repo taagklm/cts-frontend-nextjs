@@ -1,0 +1,357 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatsTable } from "./stats-table";
+import { WinnersTable } from "./winners-table";
+import { LosersTable } from "./losers-table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BurgerMenu } from "./burger-menu/toggle-button";
+import { DateRange } from "react-day-picker";
+import { format, startOfYear } from "date-fns";
+import { ProfitDistributionChart } from "./profit-distribution-chart";
+
+// Define interfaces matching TradeAnalyticsResponseDto from backend
+interface TradeAnalyticsResponse {
+  longAndShort: TradeAnalyticsBundle;
+  long: TradeAnalyticsBundle;
+  short: TradeAnalyticsBundle;
+  data: TradeAnalyticsData;
+}
+
+interface TradeAnalyticsBundle {
+  overallStats: OverallStats;
+  primarySetupStats: Record<string, Stats>;
+}
+
+interface OverallStats {
+  stats: Stats;
+  topWinners: TradeblockPerformance[];
+  topLosers: TradeblockPerformance[];
+  profitDistribution: ProfitDistributionBracket[];
+}
+
+interface Stats {
+  aum?: number | null;
+  numberOfTrades: number;
+  returnUsd?: number | null;
+  returnPhp?: number | null;
+  returnPercentage?: number | null;
+  realizedPnlUsd?: number | null;
+  realizedPnlPhp?: number | null;
+  unrealizedPnlUsd?: number | null;
+  unrealizedPnlPhp?: number | null;
+  hit: number;
+  edge: number;
+  totalProfit: number;
+  totalLoss: number;
+  numberOfWins: number;
+  numberOfLosses: number;
+  averageProfit: number;
+  averageLoss: number;
+  churn?: number | null;
+}
+
+interface TradeblockPerformance {
+  dateEntered: string;
+  symbol: string;
+  totalReturn: number;
+  realizedReturn: number;
+  unrealizedReturn: number;
+  currency: string;
+}
+
+interface ProfitDistributionBracket {
+  rangeStart?: number | null;
+  rangeEnd?: number | null;
+  count: number;
+}
+
+interface TradeAnalyticsData {
+  tradeblockIds: number[];
+  transactionIds: number[];
+}
+
+// Define component props
+interface TradeAnalyticsProps {
+  trader: string;
+  accountNo: string;
+  phAccountNo: string;
+  initialData?: TradeAnalyticsResponse | null;
+  initialError?: string | null;
+}
+
+export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, initialError }: TradeAnalyticsProps) {
+  const [activeTab, setActiveTab] = useState<"longshort" | "long" | "short">("longshort");
+  const [displayedMarket, setDisplayedMarket] = useState("IB");
+  const today = new Date();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfYear(today),
+    to: today,
+  });
+  const [displayedDateRange, setDisplayedDateRange] = useState<DateRange | undefined>({
+    from: startOfYear(today),
+    to: today,
+  });
+  const [displayedPeriod, setDisplayedPeriod] = useState<string>("yearToDate");
+  const [includeHoldings, setIncludeHoldings] = useState<boolean>(true);
+  const [analyticsData, setAnalyticsData] = useState<TradeAnalyticsResponse | null>(initialData || null);
+  const [error, setError] = useState<string | null>(initialError || null);
+  const [requestArgs, setRequestArgs] = useState<object | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // For forcing re-render
+
+  const marketNames: { [key: string]: string } = {
+    IB: "Global",
+    US: "United States",
+    HK: "Hong Kong",
+    JP: "Japan",
+    PH: "Philippines",
+  };
+
+  // Fetch analytics data when filters are applied
+  const fetchAnalytics = useCallback(async () => {
+    if (!displayedDateRange?.from) return;
+
+    const accountForMarket = displayedMarket === "PH" && phAccountNo ? phAccountNo : accountNo;
+    const args = {
+      market: displayedMarket === "IB" ? "Global" : displayedMarket,
+      account: accountForMarket,
+      dateStart: displayedDateRange.from.toISOString().split("T")[0],
+      dateEnd: displayedDateRange.to?.toISOString().split("T")[0] ?? displayedDateRange.from.toISOString().split("T")[0],
+      isHoldingsIncluded: includeHoldings,
+      tags: null,
+    };
+
+    console.log("Preparing Trade Analytics with args:", args);
+    setRequestArgs(args);
+
+    try {
+      const response = await fetch("/api/trade-analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(args),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      const result = await response.json();
+      console.log("API Response:", result);
+
+      if (response.ok) {
+        setAnalyticsData(result);
+        setError(null);
+        setRefreshKey((prev) => prev + 1); // Increment to force re-render
+      } else {
+        throw new Error(result.error || "Failed to fetch analytics data");
+      }
+    } catch (err) {
+      console.error("Error fetching analytics:", err);
+      setAnalyticsData(null);
+      setError(err instanceof Error ? err.message : "Failed to fetch analytics data");
+      setRefreshKey((prev) => prev + 1); // Increment to force re-render
+    }
+  }, [displayedMarket, displayedDateRange, includeHoldings, accountNo, phAccountNo]);
+
+  // Initial fetch only if no initialData is provided
+  useEffect(() => {
+    if (!initialData && !initialError) {
+      fetchAnalytics();
+    }
+  }, [fetchAnalytics, initialData, initialError]);
+
+  const handleApplyFilters = useCallback(() => {
+    console.log("Handle apply filters triggered");
+    setDisplayedDateRange(dateRange);
+    fetchAnalytics();
+  }, [dateRange, fetchAnalytics]);
+
+  const handleMarketChange = useCallback((market: string) => {
+    console.log("Market changed to:", market);
+    setDisplayedMarket(market);
+  }, []);
+
+  const handlePeriodChange = useCallback((period: string) => {
+    console.log("Period changed to:", period);
+    setDisplayedPeriod(period);
+  }, []);
+
+  const handleTabChange = useCallback((val: string) => {
+    console.log("Tab changed to:", val);
+    setActiveTab(val as "longshort" | "long" | "short");
+  }, []);
+
+  const formatDateRange = (range: DateRange | undefined) => {
+    if (!range?.from) return "No date selected";
+    if (displayedPeriod === "daily") {
+      return format(range.from, "MMMM d, yyyy");
+    }
+    if (displayedPeriod === "monthly") {
+      return format(range.from, "MMMM yyyy");
+    }
+    if (displayedPeriod === "annual") {
+      return range.from.getFullYear().toString();
+    }
+    if (displayedPeriod === "yearToDate") {
+      return `${format(range.from, "MMMM d, yyyy")} to ${format(range.to || range.from, "MMMM d, yyyy")}`;
+    }
+    if (!range.to) return format(range.from, "MMMM d, yyyy");
+    return `${format(range.from, "MMMM d, yyyy")} to ${format(range.to, "MMMM d, yyyy")}`;
+  };
+
+  const getCurrency = () => {
+    switch (displayedMarket) {
+      case "PH":
+        return "PHP";
+      case "HK":
+        return "HKD";
+      case "JP":
+        return "JPY";
+      case "US":
+      case "IB":
+      default:
+        return "USD";
+    }
+  };
+
+  const displayRawDateRange = (range: DateRange | undefined) => {
+    if (!range?.from) return "No date range selected";
+    return `Raw Dates - From: ${range.from.toISOString().split("T")[0]} | To: ${range.to ? range.to.toISOString().split("T")[0] : "N/A"}`;
+  };
+
+  if (error || !analyticsData) {
+    return (
+      <div className="flex items-center justify-center min-w-[48rem]">
+        <Card className="max-w-3xl w-full">
+          <CardHeader>
+            <CardTitle className="text-red-500">Error Fetching Trade Analytics</CardTitle>
+            <CardDescription>{error || "No data available"}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="font-medium">Request Arguments:</p>
+            <pre className="bg-gray-100 p-2 rounded mt-2 text-sm">
+              {JSON.stringify(requestArgs, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Map API data to component's expected format
+  const mapAnalyticsData = (bundle: TradeAnalyticsBundle) => {
+    console.log("Mapping bundle:", bundle);
+    return {
+      numberOfTrades: bundle.overallStats.stats.numberOfTrades,
+      aum: bundle.overallStats.stats.aum,
+      returnUsd: bundle.overallStats.stats.returnUsd,
+      returnPhp: bundle.overallStats.stats.returnPhp,
+      returnPercentage: bundle.overallStats.stats.returnPercentage,
+      realizedPnlUsd: bundle.overallStats.stats.realizedPnlUsd,
+      realizedPnlPhp: bundle.overallStats.stats.realizedPnlPhp,
+      unrealizedPnlUsd: bundle.overallStats.stats.unrealizedPnlUsd,
+      unrealizedPnlPhp: bundle.overallStats.stats.unrealizedPnlPhp,
+      hitRatio: bundle.overallStats.stats.hit,
+      edgeRatio: bundle.overallStats.stats.edge,
+      totalProfit: bundle.overallStats.stats.totalProfit,
+      totalLoss: bundle.overallStats.stats.totalLoss,
+      numberOfWins: bundle.overallStats.stats.numberOfWins,
+      numberOfLosses: bundle.overallStats.stats.numberOfLosses,
+      averageProfit: bundle.overallStats.stats.averageProfit,
+      averageLoss: bundle.overallStats.stats.averageLoss,
+      topWinners: bundle.overallStats.topWinners,
+      topLosers: bundle.overallStats.topLosers,
+      profitDistribution: bundle.overallStats.profitDistribution,
+    };
+  };
+
+  const activeData =
+    activeTab === "longshort"
+      ? mapAnalyticsData(analyticsData.longAndShort)
+      : activeTab === "long"
+      ? mapAnalyticsData(analyticsData.long)
+      : mapAnalyticsData(analyticsData.short);
+
+  console.log("Mapped Active Data:", activeData);
+
+  return (
+    <div className="flex items-center justify-center min-w-[48rem] pt-4">
+      <Card className="max-w-3xl w-full">
+        <CardHeader className="pb-0">
+          <div className="grid grid-cols-5">
+            <div className="col-span-4">
+              <CardTitle className="text-2xl">Trade Analytics</CardTitle>
+            </div>
+            <BurgerMenu
+              onExportReport={() => console.log("Exporting Report as PDF from TradeAnalytics")}
+              onExportTradeblocks={() => console.log("Exporting Tradeblocks as CSV from TradeAnalytics")}
+              onExportTransactions={() => console.log("Exporting Transactions as CSV from TradeAnalytics")}
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              onPeriodChange={handlePeriodChange}
+              includeHoldings={includeHoldings}
+              setIncludeHoldings={setIncludeHoldings}
+              onApplyFilters={handleApplyFilters}
+            />
+          </div>
+          <CardDescription className="pb-2 pt-0">
+            {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
+            <br />
+            Account: {accountNo}
+            {phAccountNo && (
+              <>
+                <br />
+                PH Account: {phAccountNo}
+              </>
+            )}
+            <br />
+            <span className="text-sm text-gray-500">
+              {displayRawDateRange(displayedDateRange)}
+            </span>
+          </CardDescription>
+          <Tabs
+            value={displayedMarket}
+            onValueChange={handleMarketChange}
+            className="pt-1 pb-1"
+          >
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="IB">IB</TabsTrigger>
+              <TabsTrigger value="US">US</TabsTrigger>
+              <TabsTrigger value="HK">HK</TabsTrigger>
+              <TabsTrigger value="JP">JP</TabsTrigger>
+              <TabsTrigger value="PH">PH</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Tabs
+            key={`tabs-${refreshKey}`}
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="pt-1 pb-1"
+          >
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="longshort">LONG & SHORT</TabsTrigger>
+              <TabsTrigger value="long">LONG</TabsTrigger>
+              <TabsTrigger value="short">SHORT</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
+        <CardContent className="pb-3 pt-2">
+          <div className="grid grid-cols-9">
+            <div className="col-span-5">
+              <StatsTable data={activeData} selectedMarket={displayedMarket} />
+            </div>
+            <div className="col-span-4">
+              <div className="grid grid-rows-2">
+                <div className="row-span-1">
+                  <WinnersTable winners={activeData.topWinners} selectedMarket={displayedMarket} />
+                </div>
+                <div className="row-span-1">
+                  <LosersTable losers={activeData.topLosers} selectedMarket={displayedMarket} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <ProfitDistributionChart data={activeData} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
