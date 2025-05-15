@@ -1,37 +1,21 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
 import { startOfYear } from "date-fns";
+import { mockData as analyticsMockData } from "@/mock-data/trader-trade-analytics"; // Adjust path to your TradeAnalytics mockData file
 
-// Define dynamic metadata based on trader param
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ trader: string }>;
-}) {
-  const { trader } = await params;
-  const decodedTrader = decodeURIComponent(trader);
-  return {
-    title: "CTS | " + decodedTrader, // e.g., "CTS | OTP Fund"
-    description: `Trade analytics for ${decodedTrader}, including performance metrics and profit distribution.`,
-  };
-}
+// Define static metadata for the hardcoded trader
+export const metadata = {
+  title: "CTS | Prop Trading Fund",
+  description: "Trade analytics for Prop Trading Fund, including performance metrics and profit distribution.",
+};
 
-export default async function TraderPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ trader: string }>;
-  searchParams: Promise<{ ibAccountNo?: string; phAccountNo?: string }>;
-}) {
-  const { trader } = await params;
-  const { ibAccountNo, phAccountNo } = await searchParams;
-  const decodedTrader = decodeURIComponent(trader);
+export default async function TraderPage() {
+  // Hardcode trader details
+  const decodedTrader = "Prop Trading Fund";
+  const accountNo = "U1673041"; // IB account number for Prop Trading Fund
+  const phAccountNoValue = "PHU1673041"; // PH account number for Prop Trading Fund
 
-  // Use query parameters or fallback to empty strings
-  const accountNo = ibAccountNo || "";
-  const phAccountNoValue = phAccountNo || "";
-
-  // Validate account numbers
+  // Validate account number
   if (!accountNo) {
     return (
       <div className="flex items-center justify-center min-w-[48rem]">
@@ -45,9 +29,10 @@ export default async function TraderPage({
     );
   }
 
-  // Fetch trade analytics
-  let analyticsData = null;
+  // Fetch trade analytics or use mock data
+  let analyticsData = analyticsMockData; // Default to mockData.longAndShort
   let error = null;
+
   try {
     const today = new Date();
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/trade-analytics`, {
@@ -66,9 +51,11 @@ export default async function TraderPage({
       analyticsData = await response.json();
     } else {
       error = (await response.json()).error || "Failed to fetch trade analytics";
+      analyticsData = analyticsMockData; // Fallback to mock data
     }
   } catch (err) {
     error = err instanceof Error ? err.message : "Network error";
+    analyticsData = analyticsMockData; // Fallback to mock data
   }
 
   return (
@@ -79,5 +66,6 @@ export default async function TraderPage({
       initialData={analyticsData}
       initialError={error}
     />
+    
   );
 }

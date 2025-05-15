@@ -1,5 +1,11 @@
 import { TradersPerformanceTable } from "@/components/features/traders-performance-table";
 
+// Define metadata for Traders Performance page
+export const metadata = {
+  title: "CTS | Traders",
+  description: "Performance metrics for traders across markets, including PNL and AUM.",
+};
+
 export default async function Page() {
   // Fetch traders performance data
   let tradersData = [];

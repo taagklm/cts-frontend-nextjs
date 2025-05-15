@@ -152,10 +152,11 @@ export function BurgerMenu({
         .custom-modal-content {
           background: white;
           color: #111827; /* text-gray-900 */
-          width: 600px;
+          width: 700px;
           max-width: 90vw;
           height: 100%;
-          padding: 24px;
+          padding: 18px;
+          
           overflow-y: auto;
           border-left: 1px solid #e5e7eb; /* border-gray-200 */
           box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);

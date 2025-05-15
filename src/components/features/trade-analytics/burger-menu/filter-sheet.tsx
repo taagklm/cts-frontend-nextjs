@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { startOfYear, startOfMonth, isAfter } from "date-fns";
+import { startOfYear, startOfMonth } from "date-fns";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DatePickerWithRange } from "./date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +31,7 @@ export function Range({
 }) {
   const [period, setPeriod] = React.useState("yearToDate");
   const [selectedStrategies, setSelectedStrategies] = React.useState<string[]>([]);
+  const [isDateRangeValid, setIsDateRangeValid] = React.useState(true);
   const today = normalizeDateToUTC(new Date());
 
   // List of trading strategies (non-functional, for display only)
@@ -65,6 +66,7 @@ export function Range({
     const todayUTC = normalizeDateToUTC(today);
     switch (period) {
       case "daily":
+      case "custom":
         setDateRange(undefined); // Use placeholders until user selects
         break;
       case "monthly":
@@ -74,9 +76,6 @@ export function Range({
       case "annual":
       case "yearToDate":
         setDateRange({ from: normalizeDateToUTC(startOfYear(today)), to: todayUTC });
-        break;
-      case "custom":
-        setDateRange(undefined); // Use placeholders until user selects
         break;
     }
     console.log("Range: Period changed:", { period, dateRange });
@@ -113,36 +112,18 @@ export function Range({
     console.log("Range: handleUnselectAll");
   };
 
-  // Validate dates when "Apply Filters" is clicked
+  // Handle "Apply Filters" button click
   const handleApplyFilters = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
-    console.log("Range: handleApplyFilters:", { dateRange, period });
+    e.stopPropagation();
+    console.log("Range: handleApplyFilters:", { dateRange, period, isDateRangeValid });
+    if (!isDateRangeValid) {
+      console.log("Range: Apply Filters blocked due to invalid date range");
+      return;
+    }
     if (!dateRange || !dateRange.from) {
       window.alert("Please select a valid date range.");
       return;
     }
-
-    const fromDate = normalizeDateToUTC(dateRange.from);
-    const toDate = dateRange.to ? normalizeDateToUTC(dateRange.to) : fromDate;
-
-    // Check for invalid dates
-    if (isNaN(fromDate.getTime()) || (dateRange.to && isNaN(toDate.getTime()))) {
-      window.alert("Invalid date selected. Please choose a valid date.");
-      return;
-    }
-
-    // Check for future dates
-    if (isAfter(fromDate, today) || (dateRange.to && isAfter(toDate, today))) {
-      window.alert("Future dates are not allowed. Please select a date on or before today.");
-      return;
-    }
-
-    // Check for backwards dates in custom range
-    if (period === "custom" && dateRange.to && isAfter(fromDate, toDate)) {
-      window.alert("The 'To' date cannot be before the 'From' date. Please select a valid range.");
-      return;
-    }
-
     onApplyFilters();
   };
 
@@ -163,7 +144,12 @@ export function Range({
           </SelectContent>
         </Select>
 
-        <DatePickerWithRange dateRange={dateRange} setDateRange={setDateRange} period={period} />
+        <DatePickerWithRange
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          period={period}
+          setIsValid={setIsDateRangeValid}
+        />
       </div>
 
       <div className="flex items-center gap-2">
@@ -179,7 +165,7 @@ export function Range({
       </div>
 
       <Card className="border-gray-200 dark:border-gray-600 shadow-none">
-        <CardHeader className="p-3">
+        <CardHeader className="pt-0 pb-0">
           <div className="flex justify-between items-center">
             <Label className="text-gray-900 dark:text-gray-100 text-lg font-semibold">
               Trading Strategies
@@ -194,7 +180,7 @@ export function Range({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pb-3">
+        <CardContent className="pb-0">
           <div className="grid grid-cols-3 gap-2">
             {strategies.map((strategy) => (
               <div key={strategy} className="flex items-center gap-2">
@@ -216,7 +202,11 @@ export function Range({
         </CardContent>
       </Card>
 
-      <Button onClick={handleApplyFilters} className="mt-4">
+      <Button
+        onClick={handleApplyFilters}
+        disabled={!isDateRangeValid}
+        className="mt-4"
+      >
         Apply Filters
       </Button>
     </div>

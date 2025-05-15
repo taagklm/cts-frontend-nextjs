@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+// Normalize date to UTC to avoid timezone issues
 function normalizeDateToUTC(date: Date): Date {
   if (isNaN(date.getTime())) {
     console.warn("Invalid date provided to normalizeDateToUTC, returning current date");
@@ -18,7 +19,7 @@ function normalizeDateToUTC(date: Date): Date {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 }
 
-// Helper to get days in a month, accounting for leap years
+// Get number of days in a month, accounting for leap years
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -27,15 +28,22 @@ export function DatePickerWithRange({
   dateRange,
   setDateRange,
   period,
+  setError: setParentError,
+  setIsValid,
 }: {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
   period: string;
+  setError?: (error: string | null) => void;
+  setIsValid?: (isValid: boolean) => void;
 }) {
+  // Initialize current date
   const today = normalizeDateToUTC(new Date());
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
   const currentDay = today.getDate();
+
+  // Generate years and months for dropdowns
   const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => currentYear - i);
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -43,7 +51,7 @@ export function DatePickerWithRange({
   ];
   const availableYears = years.filter((year) => year <= currentYear);
 
-  // State for dropdowns and selection flags
+  // State management
   const [selectedYear, setSelectedYear] = React.useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = React.useState<number | null>(null);
   const [fromYear, setFromYear] = React.useState<number | null>(null);
@@ -61,8 +69,9 @@ export function DatePickerWithRange({
   const [hasSelectedToYear, setHasSelectedToYear] = React.useState(false);
   const [hasSelectedToMonth, setHasSelectedToMonth] = React.useState(false);
   const [hasSelectedToDay, setHasSelectedToDay] = React.useState(false);
+  const [localError, setLocalError] = React.useState<string | null>(null);
 
-  // Generate days for dropdowns based on selected year and month
+  // Generate days for dropdowns
   const fromDays = Array.from(
     { length: getDaysInMonth(fromYear ?? currentYear, fromMonth ?? currentMonth) },
     (_, i) => i + 1
@@ -72,10 +81,10 @@ export function DatePickerWithRange({
     (_, i) => i + 1
   );
 
-  // Initialize dateRange to undefined to trigger placeholders
+  // Initialize date range
   React.useEffect(() => {
     if (!dateRange || !dateRange.from) {
-      setDateRange(undefined); // Ensure placeholders are shown initially
+      setDateRange(undefined);
       setSelectedYear(null);
       setFromYear(null);
       setToYear(null);
@@ -93,11 +102,12 @@ export function DatePickerWithRange({
       setHasSelectedToYear(false);
       setHasSelectedToMonth(false);
       setHasSelectedToDay(false);
+      setLocalError(null);
       console.log("DatePickerWithRange: Initialized with placeholders");
     }
   }, [dateRange, setDateRange]);
 
-  // Log dateRange changes for debugging
+  // Log date range changes for debugging
   React.useEffect(() => {
     if (dateRange && dateRange.from) {
       console.log("DatePickerWithRange: Date Range Updated:", {
@@ -108,15 +118,69 @@ export function DatePickerWithRange({
     }
   }, [dateRange, period]);
 
+  // Update parent on validity changes
+  React.useEffect(() => {
+    const isValid = !localError && isSelectionComplete();
+    setIsValid?.(isValid);
+    console.log("DatePickerWithRange: Validity updated:", { period, isValid, localError });
+  }, [
+    localError,
+    hasSelectedYear,
+    hasSelectedMonth,
+    hasSelectedDay,
+    hasSelectedFromYear,
+    hasSelectedFromMonth,
+    hasSelectedFromDay,
+    hasSelectedToYear,
+    hasSelectedToMonth,
+    hasSelectedToDay,
+    period,
+    setIsValid,
+  ]);
+
+  // Check if selection is complete based on period
+  const isSelectionComplete = () => {
+    switch (period) {
+      case "daily":
+        return hasSelectedYear && hasSelectedMonth && hasSelectedDay;
+      case "monthly":
+      case "monthToDate":
+        return hasSelectedMonth && (period === "monthToDate" || hasSelectedYear);
+      case "annual":
+        return hasSelectedYear;
+      case "custom":
+        return (
+          hasSelectedFromYear &&
+          hasSelectedFromMonth &&
+          hasSelectedFromDay &&
+          hasSelectedToYear &&
+          hasSelectedToMonth &&
+          hasSelectedToDay
+        );
+      case "yearToDate":
+        return true; // No user selection required
+      default:
+        return false;
+    }
+  };
+
+  // Handle annual period selection
   const handleAnnualSelect = (year: string) => {
     const yearNum = parseInt(year);
-    if (isNaN(yearNum)) return;
+    if (isNaN(yearNum)) {
+      setLocalError("Invalid year selected");
+      setParentError?.("Invalid year selected");
+      return;
+    }
+    if (yearNum > currentYear) {
+      setLocalError("Year cannot be in the future");
+      setParentError?.("Year cannot be in the future");
+      return;
+    }
     setSelectedYear(yearNum);
     setHasSelectedYear(true);
     const start = normalizeDateToUTC(startOfYear(new Date(yearNum, 0, 1)));
-    const end = yearNum === currentYear
-      ? today
-      : normalizeDateToUTC(endOfYear(new Date(yearNum, 0, 1)));
+    const end = yearNum === currentYear ? today : normalizeDateToUTC(endOfYear(new Date(yearNum, 0, 1)));
     setDateRange({ from: start, to: end });
     setFromYear(yearNum);
     setFromMonth(0);
@@ -124,13 +188,25 @@ export function DatePickerWithRange({
     setToYear(yearNum);
     setToMonth(11);
     setToDay(getDaysInMonth(yearNum, 11));
+    setLocalError(null);
+    setParentError?.(null);
     console.log("handleAnnualSelect:", { yearNum, from: start, to: end });
   };
 
+  // Handle monthly period selection
   const handleMonthlySelect = (month: string, year?: string) => {
     const monthNum = parseInt(month);
-    const yearNum = year ? parseInt(year) : currentYear; // Use currentYear for monthToDate
-    if (isNaN(monthNum) || isNaN(yearNum)) return;
+    const yearNum = year ? parseInt(year) : currentYear;
+    if (isNaN(monthNum) || isNaN(yearNum)) {
+      setLocalError("Invalid month or year selected");
+      setParentError?.("Invalid month or year selected");
+      return;
+    }
+    if (yearNum > currentYear || (yearNum === currentYear && monthNum > currentMonth)) {
+      setLocalError("Month cannot be in the future");
+      setParentError?.("Month cannot be in the future");
+      return;
+    }
     setSelectedMonth(monthNum);
     setHasSelectedMonth(true);
     if (year) {
@@ -147,13 +223,13 @@ export function DatePickerWithRange({
       setToYear(currentYear);
       setToMonth(currentMonth);
       setToDay(currentDay);
+      setLocalError(null);
+      setParentError?.(null);
       console.log("handleMonthlySelect (monthToDate):", { from: start, to: today });
     } else {
       const start = normalizeDateToUTC(startOfMonth(date));
       const endOfSelectedMonth = normalizeDateToUTC(endOfMonth(date));
-      const end = yearNum === currentYear && monthNum === currentMonth
-        ? today
-        : endOfSelectedMonth;
+      const end = yearNum === currentYear && monthNum === currentMonth ? today : endOfSelectedMonth;
       setDateRange({ from: start, to: end });
       setFromYear(yearNum);
       setFromMonth(monthNum);
@@ -161,41 +237,53 @@ export function DatePickerWithRange({
       setToYear(yearNum);
       setToMonth(monthNum);
       setToDay(getDaysInMonth(yearNum, monthNum));
+      setLocalError(null);
+      setParentError?.(null);
       console.log("handleMonthlySelect (monthly):", { from: start, to: end });
     }
   };
 
+  // Handle daily period selection
   const handleDailySelect = (year: number, month: number, day: number) => {
-    // Use current values if not all fields are selected
     const finalYear = year ?? (hasSelectedYear ? fromYear : currentYear);
     const finalMonth = month ?? (hasSelectedMonth ? fromMonth : currentMonth);
     const finalDay = day ?? (hasSelectedDay ? fromDay : currentDay);
-    // Reset to valid date if future for 2025
-    let adjustedYear = finalYear;
-    let adjustedMonth = finalMonth;
-    let adjustedDay = finalDay;
-    if (finalYear === currentYear && finalMonth > currentMonth) {
-      adjustedMonth = currentMonth;
-      adjustedDay = currentDay;
-    } else if (finalYear === currentYear && finalMonth === currentMonth && finalDay > currentDay) {
-      adjustedDay = currentDay;
+    if (isNaN(finalYear) || isNaN(finalMonth) || isNaN(finalDay)) {
+      setLocalError("Invalid date selected");
+      setParentError?.("Invalid date selected");
+      return;
     }
-    const selectedDate = normalizeDateToUTC(new Date(adjustedYear, adjustedMonth, adjustedDay));
+    if (
+      finalYear > currentYear ||
+      (finalYear === currentYear && finalMonth > currentMonth) ||
+      (finalYear === currentYear && finalMonth === currentMonth && finalDay > currentDay)
+    ) {
+      setLocalError("Date cannot be in the future");
+      setParentError?.("Date cannot be in the future");
+      return;
+    }
+    const selectedDate = normalizeDateToUTC(new Date(finalYear, finalMonth, finalDay));
     setDateRange({ from: selectedDate, to: selectedDate });
-    setFromYear(adjustedYear);
-    setFromMonth(adjustedMonth);
-    setFromDay(adjustedDay);
-    setToYear(adjustedYear);
-    setToMonth(adjustedMonth);
-    setToDay(adjustedDay);
+    setFromYear(finalYear);
+    setFromMonth(finalMonth);
+    setFromDay(finalDay);
+    setToYear(finalYear);
+    setToMonth(finalMonth);
+    setToDay(finalDay);
+    setHasSelectedYear(true);
+    setHasSelectedMonth(true);
+    setHasSelectedDay(true);
+    setLocalError(null);
+    setParentError?.(null);
     console.log("handleDailySelect:", {
-      fromYear: adjustedYear,
-      fromMonth: adjustedMonth,
-      fromDay: adjustedDay,
+      fromYear: finalYear,
+      fromMonth: finalMonth,
+      fromDay: finalDay,
       selectedDate,
     });
   };
 
+  // Handle custom range selection with validation
   const handleCustomSelect = (
     fromYearVal: number,
     fromMonthVal: number,
@@ -204,20 +292,58 @@ export function DatePickerWithRange({
     toMonthVal: number,
     toDayVal: number
   ) => {
-    // Use current values if not all fields are selected
     const finalFromYear = fromYearVal ?? (hasSelectedFromYear ? fromYear : currentYear);
     const finalFromMonth = fromMonthVal ?? (hasSelectedFromMonth ? fromMonth : currentMonth);
     const finalFromDay = fromDayVal ?? (hasSelectedFromDay ? fromDay : currentDay);
     const finalToYear = toYearVal ?? (hasSelectedToYear ? toYear : currentYear);
     const finalToMonth = toMonthVal ?? (hasSelectedToMonth ? toMonth : currentMonth);
     const finalToDay = toDayVal ?? (hasSelectedToDay ? toDay : currentDay);
-    const fromDate = normalizeDateToUTC(new Date(finalFromYear, finalFromMonth, finalFromDay));
-    const toDate = normalizeDateToUTC(new Date(finalToYear, finalToMonth, finalToDay));
-    // Prevent setting if To is before From (validation deferred to Apply Filters)
-    if (isAfter(fromDate, toDate)) {
-      console.log("handleCustomSelect: Skipped due to To before From", { fromDate, toDate });
+
+    if (
+      isNaN(finalFromYear) ||
+      isNaN(finalFromMonth) ||
+      isNaN(finalFromDay) ||
+      isNaN(finalToYear) ||
+      isNaN(finalToMonth) ||
+      isNaN(finalToDay)
+    ) {
+      setLocalError("Invalid date selected");
+      setParentError?.("Invalid date selected");
       return;
     }
+
+    if (
+      finalFromYear > currentYear ||
+      (finalFromYear === currentYear && finalFromMonth > currentMonth) ||
+      (finalFromYear === currentYear && finalFromMonth === currentMonth && finalFromDay > currentDay)
+    ) {
+      setLocalError("Start date cannot be in the future");
+      setParentError?.("Start date cannot be in the future");
+      return;
+    }
+
+    if (
+      finalToYear > currentYear ||
+      (finalToYear === currentYear && finalToMonth > currentMonth) ||
+      (finalToYear === currentYear && finalToMonth === currentMonth && finalToDay > currentDay)
+    ) {
+      setLocalError("End date cannot be in the future");
+      setParentError?.("End date cannot be in the future");
+      return;
+    }
+
+    const fromDate = normalizeDateToUTC(new Date(finalFromYear, finalFromMonth, finalFromDay));
+    const toDate = normalizeDateToUTC(new Date(finalToYear, finalToMonth, finalToDay));
+
+    if (isAfter(fromDate, toDate)) {
+      setLocalError("End date cannot be earlier than start date");
+      setParentError?.("End date cannot be earlier than start date");
+      console.log("handleCustomSelect: Invalid range (To before From)", { fromDate, toDate });
+      return;
+    }
+
+    setLocalError(null);
+    setParentError?.(null);
     setDateRange({ from: fromDate, to: toDate });
     setFromYear(finalFromYear);
     setFromMonth(finalFromMonth);
@@ -237,6 +363,7 @@ export function DatePickerWithRange({
     });
   };
 
+  // Format display text for the button
   const getDisplayText = () => {
     if (!dateRange || !dateRange.from || isNaN(dateRange.from.getTime())) {
       if (period === "daily") {
@@ -257,9 +384,13 @@ export function DatePickerWithRange({
         const toDayText = hasSelectedToDay && toDay ? toDay.toString().padStart(2, "0") : "dd";
         return `${fromYearText}-${fromMonthText}-${fromDayText} - ${toYearText}-${toMonthText}-${toDayText}`;
       }
-      if (period === "monthToDate") {
+      if (period === "monthly" || period === "monthToDate") {
         const monthText = hasSelectedMonth && selectedMonth !== null ? months[selectedMonth] : "mm";
-        return `${monthText} ${currentYear}`;
+        const yearText = hasSelectedYear && selectedYear ? selectedYear : "yyyy";
+        return `${monthText} ${yearText}`;
+      }
+      if (period === "annual") {
+        return hasSelectedYear && selectedYear ? selectedYear.toString() : "yyyy";
       }
       return "Pick a date";
     }
@@ -323,6 +454,7 @@ export function DatePickerWithRange({
                   ))}
                 </SelectContent>
               </Select>
+              {localError && <p className="text-sm text-red-500 mt-2">{localError}</p>}
             </div>
           ) : period === "yearToDate" ? (
             <div className="p-3 text-left w-full">
@@ -372,6 +504,7 @@ export function DatePickerWithRange({
                   ))}
                 </SelectContent>
               </Select>
+              {localError && <p className="text-sm text-red-500 mt-2">{localError}</p>}
             </div>
           ) : period === "monthToDate" ? (
             <div className="p-3 text-left w-full">
@@ -397,6 +530,7 @@ export function DatePickerWithRange({
                   ))}
                 </SelectContent>
               </Select>
+              {localError && <p className="text-sm text-red-500 mt-2">{localError}</p>}
             </div>
           ) : period === "daily" ? (
             <div className="p-3 space-y-2 text-left w-full">
@@ -407,7 +541,6 @@ export function DatePickerWithRange({
                     const newYear = parseInt(value);
                     setFromYear(newYear);
                     setHasSelectedYear(true);
-                    // Reset day if month/day is in future for 2025
                     let newMonth = fromMonth ?? currentMonth;
                     let newDay = fromDay ?? currentDay;
                     if (newYear === currentYear && newMonth > currentMonth) {
@@ -445,7 +578,6 @@ export function DatePickerWithRange({
                     const newMonth = parseInt(value);
                     setFromMonth(newMonth);
                     setHasSelectedMonth(true);
-                    // Reset day if day is in future for current year/month
                     let newDay = fromDay ?? currentDay;
                     if ((fromYear ?? currentYear) === currentYear && newMonth === currentMonth && newDay > currentDay) {
                       newDay = currentDay;
@@ -505,6 +637,7 @@ export function DatePickerWithRange({
                   </SelectContent>
                 </Select>
               </div>
+              {localError && <p className="text-sm text-red-500 mt-2">{localError}</p>}
             </div>
           ) : (
             <div className="p-3 space-y-4 text-left w-full">
@@ -517,16 +650,26 @@ export function DatePickerWithRange({
                       const newYear = parseInt(value);
                       setFromYear(newYear);
                       setHasSelectedFromYear(true);
-                      const maxDays = getDaysInMonth(newYear, fromMonth ?? currentMonth);
+                      let newMonth = fromMonth ?? currentMonth;
                       let newDay = fromDay ?? currentDay;
+                      if (newYear === currentYear && newMonth > currentMonth) {
+                        newMonth = currentMonth;
+                        newDay = currentDay;
+                        setFromMonth(newMonth);
+                        setFromDay(newDay);
+                      } else if (newYear === currentYear && newMonth === currentMonth && newDay > currentDay) {
+                        newDay = currentDay;
+                        setFromDay(newDay);
+                      }
+                      const maxDays = getDaysInMonth(newYear, newMonth);
                       if (newDay > maxDays) {
                         newDay = maxDays;
                         setFromDay(newDay);
                       }
-                      console.log("Custom From Year Select:", { value: newYear, fromDay: newDay });
+                      console.log("Custom From Year Select:", { value: newYear, fromMonth: newMonth, fromDay: newDay });
                       handleCustomSelect(
                         newYear,
-                        fromMonth ?? currentMonth,
+                        newMonth,
                         newDay,
                         toYear ?? currentYear,
                         toMonth ?? currentMonth,
@@ -539,7 +682,11 @@ export function DatePickerWithRange({
                     </SelectTrigger>
                     <SelectContent>
                       {availableYears.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
+                        <SelectItem
+                          key={year}
+                          value={year.toString()}
+                          disabled={year > currentYear}
+                        >
                           {year}
                         </SelectItem>
                       ))}
@@ -551,8 +698,12 @@ export function DatePickerWithRange({
                       const newMonth = parseInt(value);
                       setFromMonth(newMonth);
                       setHasSelectedFromMonth(true);
-                      const maxDays = getDaysInMonth(fromYear ?? currentYear, newMonth);
                       let newDay = fromDay ?? currentDay;
+                      if ((fromYear ?? currentYear) === currentYear && newMonth === currentMonth && newDay > currentDay) {
+                        newDay = currentDay;
+                        setFromDay(newDay);
+                      }
+                      const maxDays = getDaysInMonth(fromYear ?? currentYear, newMonth);
                       if (newDay > maxDays) {
                         newDay = maxDays;
                         setFromDay(newDay);
@@ -573,7 +724,11 @@ export function DatePickerWithRange({
                     </SelectTrigger>
                     <SelectContent>
                       {months.map((month, index) => (
-                        <SelectItem key={month} value={index.toString()}>
+                        <SelectItem
+                          key={month}
+                          value={index.toString()}
+                          disabled={(fromYear ?? currentYear) === currentYear && index > currentMonth}
+                        >
                           {month}
                         </SelectItem>
                       ))}
@@ -601,7 +756,15 @@ export function DatePickerWithRange({
                     </SelectTrigger>
                     <SelectContent>
                       {fromDays.map((day) => (
-                        <SelectItem key={day} value={day.toString()}>
+                        <SelectItem
+                          key={day}
+                          value={day.toString()}
+                          disabled={
+                            (fromYear ?? currentYear) === currentYear &&
+                            (fromMonth ?? currentMonth) === currentMonth &&
+                            day > currentDay
+                          }
+                        >
                           {day}
                         </SelectItem>
                       ))}
@@ -640,7 +803,11 @@ export function DatePickerWithRange({
                     </SelectTrigger>
                     <SelectContent>
                       {availableYears.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
+                        <SelectItem
+                          key={year}
+                          value={year.toString()}
+                          disabled={year > currentYear}
+                        >
                           {year}
                         </SelectItem>
                       ))}
@@ -674,7 +841,11 @@ export function DatePickerWithRange({
                     </SelectTrigger>
                     <SelectContent>
                       {months.map((month, index) => (
-                        <SelectItem key={month} value={index.toString()}>
+                        <SelectItem
+                          key={month}
+                          value={index.toString()}
+                          disabled={(toYear ?? currentYear) === currentYear && index > currentMonth}
+                        >
                           {month}
                         </SelectItem>
                       ))}
@@ -702,7 +873,15 @@ export function DatePickerWithRange({
                     </SelectTrigger>
                     <SelectContent>
                       {toDays.map((day) => (
-                        <SelectItem key={day} value={day.toString()}>
+                        <SelectItem
+                          key={day}
+                          value={day.toString()}
+                          disabled={
+                            (toYear ?? currentYear) === currentYear &&
+                            (toMonth ?? currentMonth) === currentMonth &&
+                            day > currentDay
+                          }
+                        >
                           {day}
                         </SelectItem>
                       ))}
@@ -710,10 +889,16 @@ export function DatePickerWithRange({
                   </Select>
                 </div>
               </div>
+              {localError && period === "custom" && (
+                <p className="text-sm text-red-500 mt-2">{localError}</p>
+              )}
             </div>
           )}
         </PopoverContent>
       </Popover>
+      {localError && (
+        <p className="text-sm text-red-500 mt-2">{localError}</p>
+      )}
     </div>
   );
 }

@@ -11,6 +11,11 @@ import { DateRange } from "react-day-picker";
 import { format, startOfYear } from "date-fns";
 import { ProfitDistributionChart } from "./profit-distribution-chart";
 
+// Import normalizeDateToUTC for consistent date handling
+function normalizeDateToUTC(date: Date): Date {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+}
+
 // Define interfaces matching TradeAnalyticsResponseDto from backend
 interface TradeAnalyticsResponse {
   longAndShort: TradeAnalyticsBundle;
@@ -85,13 +90,14 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   const [activeTab, setActiveTab] = useState<"longshort" | "long" | "short">("longshort");
   const [displayedMarket, setDisplayedMarket] = useState("IB");
   const today = new Date();
+  // Initialize date range to year-to-date with UTC normalization
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfYear(today),
-    to: today,
+    from: normalizeDateToUTC(startOfYear(today)), // Ensure 2025-01-01
+    to: normalizeDateToUTC(today), // Ensure current date
   });
   const [displayedDateRange, setDisplayedDateRange] = useState<DateRange | undefined>({
-    from: startOfYear(today),
-    to: today,
+    from: normalizeDateToUTC(startOfYear(today)), // Ensure 2025-01-01
+    to: normalizeDateToUTC(today), // Ensure current date
   });
   const [displayedPeriod, setDisplayedPeriod] = useState<string>("yearToDate");
   const [includeHoldings, setIncludeHoldings] = useState<boolean>(true);
@@ -116,7 +122,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
     const args = {
       market: displayedMarket === "IB" ? "Global" : displayedMarket,
       account: accountForMarket,
-      dateStart: displayedDateRange.from.toISOString().split("T")[0],
+      dateStart: displayedDateRange.from.toISOString().split("T")[0], // Format as yyyy-MM-dd
       dateEnd: displayedDateRange.to?.toISOString().split("T")[0] ?? displayedDateRange.from.toISOString().split("T")[0],
       isHoldingsIncluded: includeHoldings,
       tags: null,
@@ -214,6 +220,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
 
   const displayRawDateRange = (range: DateRange | undefined) => {
     if (!range?.from) return "No date range selected";
+    // Ensure raw dates are displayed in UTC yyyy-MM-dd format
     return `Raw Dates - From: ${range.from.toISOString().split("T")[0]} | To: ${range.to ? range.to.toISOString().split("T")[0] : "N/A"}`;
   };
 
@@ -273,12 +280,26 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   console.log("Mapped Active Data:", activeData);
 
   return (
-    <div className="flex items-center justify-center min-w-[48rem] pt-4">
+    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4">
+      {/* Market TabsList placed at the top, vertically stacked */}
+      <Tabs
+        value={displayedMarket}
+        onValueChange={handleMarketChange}
+        className="w-full max-w-3xl"
+      >
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="IB">IB</TabsTrigger>
+          <TabsTrigger value="US">US</TabsTrigger>
+          <TabsTrigger value="HK">HK</TabsTrigger>
+          <TabsTrigger value="JP">JP</TabsTrigger>
+          <TabsTrigger value="PH">PH</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <Card className="max-w-3xl w-full">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">
-              <CardTitle className="text-2xl">Trade Analytics</CardTitle>
+              <CardTitle className="text-2xl pb-0">Trade Analytics</CardTitle>
             </div>
             <BurgerMenu
               onExportReport={() => console.log("Exporting Report as PDF from TradeAnalytics")}
@@ -294,7 +315,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           </div>
           <CardDescription className="pb-2 pt-0">
             {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
-            <br />
+            {/* <br />
             Account: {accountNo}
             {phAccountNo && (
               <>
@@ -305,26 +326,13 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
             <br />
             <span className="text-sm text-gray-500">
               {displayRawDateRange(displayedDateRange)}
-            </span>
+            </span> */}
           </CardDescription>
-          <Tabs
-            value={displayedMarket}
-            onValueChange={handleMarketChange}
-            className="pt-1 pb-1"
-          >
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="IB">IB</TabsTrigger>
-              <TabsTrigger value="US">US</TabsTrigger>
-              <TabsTrigger value="HK">HK</TabsTrigger>
-              <TabsTrigger value="JP">JP</TabsTrigger>
-              <TabsTrigger value="PH">PH</TabsTrigger>
-            </TabsList>
-          </Tabs>
           <Tabs
             key={`tabs-${refreshKey}`}
             value={activeTab}
             onValueChange={handleTabChange}
-            className="pt-1 pb-1"
+            className="pt-1 pb-0"
           >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="longshort">LONG & SHORT</TabsTrigger>
@@ -333,7 +341,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
             </TabsList>
           </Tabs>
         </CardHeader>
-        <CardContent className="pb-3 pt-2">
+        <CardContent className="pb-0 pt-0">
           <div className="grid grid-cols-9">
             <div className="col-span-5">
               <StatsTable data={activeData} selectedMarket={displayedMarket} />

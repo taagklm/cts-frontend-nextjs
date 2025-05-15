@@ -79,14 +79,14 @@ const formatRange = (start: number | null | undefined, end: number | null | unde
 
 export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
   console.log("ProfitDistributionChart data:", data); // Debug input data
-  console.log("ProfitDistribution array:", data.profitDistribution); // Debug profitDistribution
+  console.log("ProfitDistribution array:", data?.profitDistribution); // Debug profitDistribution
 
   // Transform profit distribution data for chart
-  const chartData: ChartData[] = (data.profitDistribution || []).map((bracket) => {
+  const chartData: ChartData[] = (data?.profitDistribution ?? []).map((bracket) => {
     const isPositive = bracket.rangeStart != null && bracket.rangeStart >= 0;
     return {
       range: formatRange(bracket.rangeStart, bracket.rangeEnd),
-      frequency: bracket.count,
+      frequency: bracket.count ?? 0,
       fill: isPositive ? chartConfig.positiveFrequency.color : chartConfig.frequency.color,
     };
   });
@@ -143,10 +143,7 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar
-              dataKey="frequency"
-              fill="#8884d8" // Fallback color
-            >
+            <Bar dataKey="frequency" fill="#8884d8">
               {chartData.map((entry, index) => (
                 <Bar
                   key={`bar-${index}`}
