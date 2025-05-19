@@ -116,13 +116,17 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
 
   // Fetch analytics data when filters are applied
   const fetchAnalytics = useCallback(async () => {
-    if (!displayedDateRange?.from) return;
+    console.log("fetchAnalytics started", { displayedDateRange, displayedMarket, includeHoldings });
+    if (!displayedDateRange?.from) {
+      console.log("fetchAnalytics aborted: No valid displayedDateRange.from");
+      return;
+    }
 
     const accountForMarket = displayedMarket === "PH" && phAccountNo ? phAccountNo : accountNo;
     const args = {
       market: displayedMarket === "IB" ? "Global" : displayedMarket,
       account: accountForMarket,
-      dateStart: displayedDateRange.from.toISOString().split("T")[0], // Format as yyyy-MM-dd
+      dateStart: displayedDateRange.from.toISOString().split("T")[0],
       dateEnd: displayedDateRange.to?.toISOString().split("T")[0] ?? displayedDateRange.from.toISOString().split("T")[0],
       isHoldingsIncluded: includeHoldings,
       tags: null,
@@ -131,7 +135,16 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
     console.log("Preparing Trade Analytics with args:", args);
     setRequestArgs(args);
 
+    const requestDetails = {
+      url: "/api/trade-analytics",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(args),
+    };
+    console.log("API Request Details:", requestDetails);
+
     try {
+      console.log("Sending fetch request to /api/trade-analytics");
       const response = await fetch("/api/trade-analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -139,13 +152,14 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
         signal: AbortSignal.timeout(10000),
       });
 
+      console.log("Fetch response received:", { status: response.status, ok: response.ok });
       const result = await response.json();
       console.log("API Response:", result);
 
       if (response.ok) {
         setAnalyticsData(result);
         setError(null);
-        setRefreshKey((prev) => prev + 1); // Increment to force re-render
+        setRefreshKey((prev) => prev + 1);
       } else {
         throw new Error(result.error || "Failed to fetch analytics data");
       }
@@ -153,7 +167,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
       console.error("Error fetching analytics:", err);
       setAnalyticsData(null);
       setError(err instanceof Error ? err.message : "Failed to fetch analytics data");
-      setRefreshKey((prev) => prev + 1); // Increment to force re-render
+      setRefreshKey((prev) => prev + 1);
     }
   }, [displayedMarket, displayedDateRange, includeHoldings, accountNo, phAccountNo]);
 
@@ -274,8 +288,8 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
     activeTab === "longshort"
       ? mapAnalyticsData(analyticsData.longAndShort)
       : activeTab === "long"
-      ? mapAnalyticsData(analyticsData.long)
-      : mapAnalyticsData(analyticsData.short);
+        ? mapAnalyticsData(analyticsData.long)
+        : mapAnalyticsData(analyticsData.short);
 
   console.log("Mapped Active Data:", activeData);
 
