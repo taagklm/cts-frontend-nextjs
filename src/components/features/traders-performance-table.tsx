@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { mockData } from "@/mock-data/traders-performance";
 
 export type TradersPerformanceTableData = {
   trader: string;
@@ -58,25 +59,31 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
         Trader
       </Button>
     ),
-    cell: ({ row }: { row: Row<TradersPerformanceTableData> }) => (
-      <Link
-        href={{
-          pathname: `traders/${encodeURIComponent(row.getValue("trader"))}`,
-          query: {
-            ibAccountNo: row.getValue("ibAccountNo"),
-            phAccountNo: row.getValue("phAccountNo"),
-          },
-        }}
-        className="text-blue-500 hover:underline"
-      >
-        {row.getValue("trader")}
-      </Link>
-    ),
+    cell: ({ row }: { row: Row<TradersPerformanceTableData> }) => {
+      const trader = row.getValue("trader") as string;
+      const ibAccountNo = row.getValue("ibAccountNo") as string;
+      const phAccountNo = row.getValue("phAccountNo") as string;
+      console.log("TradersPerformanceTable: Linking trader:", { trader, ibAccountNo, phAccountNo });
+      return (
+        <Link
+          href={{
+            pathname: `/risk-platform/dashboard/traders/${encodeURIComponent(trader)}`,
+            query: {
+              ibAccountNo,
+              phAccountNo,
+            },
+          }}
+          className="text-blue-500 hover:underline"
+        >
+          {trader}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "ibPnlYTD",
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>
+      <div className="text-right">
         <Button
           className="p-0"
           variant="ghost"
@@ -93,7 +100,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
       const formattedValue = isValid
         ? (value > 0 ? `+${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}` : new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value))
         : "N/A";
-      return <div className="text-right" style={{ textAlign: "right", color }}>{formattedValue}</div>;
+      return <div className="text-right" style={{ color }}>{formattedValue}</div>;
     },
   },
   {
@@ -122,7 +129,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
   {
     accessorKey: "phPnlYTD",
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>
+      <div className="text-right">
         <Button
           className="p-0"
           variant="ghost"
@@ -139,7 +146,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
       const formattedValue = isValid
         ? (value > 0 ? `+${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}` : new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value))
         : "N/A";
-      return <div className="text-right" style={{ textAlign: "right", color }}>{formattedValue}</div>;
+      return <div className="text-right" style={{ color }}>{formattedValue}</div>;
     },
   },
   {
@@ -168,7 +175,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
   {
     accessorKey: "ibAum",
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>
+      <div className="text-right">
         <Button
           className="p-0"
           variant="ghost"
@@ -181,13 +188,13 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
     cell: ({ row }: { row: Row<TradersPerformanceTableData> }) => {
       const value = parseFloat(row.getValue("ibAum"));
       const formattedValue = !isNaN(value) ? new Intl.NumberFormat("en-US").format(value) : "N/A";
-      return <div className="text-right" style={{ textAlign: "right" }}>{formattedValue}</div>;
+      return <div className="text-right">{formattedValue}</div>;
     },
   },
   {
     accessorKey: "phAum",
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>
+      <div className="text-right">
         <Button
           className="p-0"
           variant="ghost"
@@ -200,13 +207,13 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
     cell: ({ row }: { row: Row<TradersPerformanceTableData> }) => {
       const value = parseFloat(row.getValue("phAum"));
       const formattedValue = !isNaN(value) ? new Intl.NumberFormat("en-US").format(value) : "N/A";
-      return <div className="text-right" style={{ textAlign: "right" }}>{formattedValue}</div>;
+      return <div className="text-right">{formattedValue}</div>;
     },
   },
   {
     accessorKey: "ibAccountNo",
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>
+      <div className="text-right">
         <Button
           className="p-0"
           variant="ghost"
@@ -217,13 +224,13 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
       </div>
     ),
     cell: ({ row }: { row: Row<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>{row.getValue("ibAccountNo") || "N/A"}</div>
+      <div className="text-right">{row.getValue("ibAccountNo") || "N/A"}</div>
     ),
   },
   {
     accessorKey: "phAccountNo",
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>
+      <div className="text-right">
         <Button
           className="p-0"
           variant="ghost"
@@ -234,7 +241,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
       </div>
     ),
     cell: ({ row }: { row: Row<TradersPerformanceTableData> }) => (
-      <div className="text-right" style={{ textAlign: "right" }}>{row.getValue("phAccountNo") || "N/A"}</div>
+      <div className="text-right">{row.getValue("phAccountNo") || "N/A"}</div>
     ),
   },
 ];

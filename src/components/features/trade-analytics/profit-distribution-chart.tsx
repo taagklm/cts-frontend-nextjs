@@ -112,7 +112,7 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
       <CardHeader>
         <CardTitle>Profit Distribution</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="pt-4 pr-4 pt-4 pb-0">
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer

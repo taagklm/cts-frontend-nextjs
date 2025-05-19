@@ -1,19 +1,29 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
-import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardHeader, CardDescription, CardContent } from "../ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { mockDailyPnl } from "@/mock-data/daily-pnl";
 
+interface DailyPnlEntry {
+  date: string;
+  totalPnl: number;
+  realizedPnl: number;
+  unrealizedPnl: number;
+}
+
+interface DailyPnlData {
+  account: string;
+  currency: string;
+  dailyPnl: DailyPnlEntry[];
+}
 
 interface EquityCurveProps {
-  data: {
-    totalProfit: number;
-    totalLoss: number;
-    topWinners: { dateEntered: string; totalReturn: number }[];
-    topLosers: { dateEntered: string; totalReturn: number }[];
-  };
+  accountNo: string;
+  dateRange?: DateRange;
+  market: string;
 }
 
 const chartConfig = {
@@ -31,11 +41,9 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function EquityCurve({ data }: EquityCurveProps) {
-  const [selectedMarket, setSelectedMarket] = useState("US");
-
+export function EquityCurve({ accountNo, dateRange, market }: EquityCurveProps) {
   const marketNames: { [key: string]: string } = {
-    global: "Global",
+    IB: "Global",
     US: "United States",
     HK: "Hong Kong",
     JP: "Japan",
@@ -43,7 +51,7 @@ export function EquityCurve({ data }: EquityCurveProps) {
   };
 
   const getCurrency = () => {
-    switch (selectedMarket) {
+    switch (market) {
       case "PH":
         return "PHP";
       case "HK":
@@ -51,26 +59,51 @@ export function EquityCurve({ data }: EquityCurveProps) {
       case "JP":
         return "JPY";
       case "US":
-      case "global":
+      case "IB":
       default:
         return "USD";
     }
   };
 
-  // Generate chartData from data
-  const chartData = [
-    ...data.topWinners.map((w, i) => ({
-      day: new Date(w.dateEntered).getDate(),
-      equity: w.totalReturn,
-    })),
-    ...data.topLosers.map((l, i) => ({
-      day: new Date(l.dateEntered).getDate(),
-      equity: l.totalReturn,
-    })),
-  ].sort((a, b) => a.day - b.day); // Sort by day
+  // Filter mockDailyPnl by accountNo
+  const accountData = mockDailyPnl.find((data) => data.account === accountNo) || {
+    account: accountNo,
+    currency: "USD",
+    dailyPnl: [],
+  };
+
+  // Filter by dateRange if provided
+  const filteredDailyPnl = dateRange?.from && dateRange?.to
+    ? accountData.dailyPnl.filter((entry) => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= dateRange.from! && entryDate <= dateRange.to!;
+      })
+    : accountData.dailyPnl;
+
+  if (filteredDailyPnl.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-w-[48rem]">
+        <Card className="max-w-3xl w-full">
+          <CardHeader>
+            <h1 className="text-2xl font-bold">Equity Curve</h1>
+            <CardDescription>No equity data available for account: {accountNo}</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  const chartData = filteredDailyPnl
+    .map((entry) => ({
+      date: new Date(entry.date),
+      equityPositive: entry.totalPnl > 0 ? entry.totalPnl : 0,
+      equityNegative: entry.totalPnl < 0 ? entry.totalPnl : 0,
+      equity: entry.totalPnl,
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
-    <div className="flex items-center justify-center min-w-[48rem]">
+    <div className="flex items-center justify-center min-w-[48rem] pb-6">
       <Card className="max-w-3xl w-full">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
@@ -78,24 +111,11 @@ export function EquityCurve({ data }: EquityCurveProps) {
               <h1 className="text-2xl font-bold">Equity Curve</h1>
             </div>
           </div>
-          <CardDescription className="pb-2 pt-0">
-            {`${marketNames[selectedMarket]} Market from April 23, 2025. The values displayed are in ${getCurrency()}.`}
+          <CardDescription className="pt-0">
+            {`${marketNames[market] || "Global"} Market from ${format(new Date(filteredDailyPnl[0].date), "MMMM d, yyyy")} to ${format(new Date(filteredDailyPnl[filteredDailyPnl.length - 1].date), "MMMM d, yyyy")}. The values displayed are in ${getCurrency()}.`}
           </CardDescription>
-          <Tabs
-            value={selectedMarket}
-            onValueChange={(val) => setSelectedMarket(val)}
-            className="pt-1 pb-1"
-          >
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="global">Global</TabsTrigger>
-              <TabsTrigger value="US">US</TabsTrigger>
-              <TabsTrigger value="HK">HK</TabsTrigger>
-              <TabsTrigger value="JP">JP</TabsTrigger>
-              <TabsTrigger value="PH">PH</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </CardHeader>
-        <CardContent className="rounded-lg border bg-card text-card-foreground shadow-sm mr-6 ml-6 mt-3 mb-6">
+        <CardContent className="rounded-lg border bg-card text-card-foreground shadow-sm mr-6 ml-6 shadow-none pb-1">
           <ChartContainer config={chartConfig}>
             <AreaChart
               data={chartData}
@@ -108,17 +128,18 @@ export function EquityCurve({ data }: EquityCurveProps) {
             >
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
-                dataKey="day"
+                dataKey="date"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                tickFormatter={(date) => format(date, "MMM d")}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                domain={[-150, 200]}
-                ticks={[-150, -100, -50, 0, 50, 100, 150, 200]}
+                domain={[-2000, 2500]}
+                ticks={[-2000, -1500, -1000, -500, 0, 500, 1000, 1500, 2000, 2500]}
                 tickFormatter={(value) => value.toFixed(2)}
               />
               <ChartTooltip
@@ -127,7 +148,7 @@ export function EquityCurve({ data }: EquityCurveProps) {
               />
               <Area
                 key="positive-fill"
-                dataKey="equity"
+                dataKey="equityPositive"
                 name="equityPositive"
                 type="linear"
                 stroke="none"
@@ -136,11 +157,10 @@ export function EquityCurve({ data }: EquityCurveProps) {
                 stackId="1"
                 connectNulls
                 isAnimationActive={false}
-                baseValue={0}
               />
               <Area
                 key="negative-fill"
-                dataKey="equity"
+                dataKey="equityNegative"
                 name="equityNegative"
                 type="linear"
                 stroke="none"
@@ -149,7 +169,6 @@ export function EquityCurve({ data }: EquityCurveProps) {
                 stackId="1"
                 connectNulls
                 isAnimationActive={false}
-                baseValue={0}
               />
               <Area
                 key="equity-line"
