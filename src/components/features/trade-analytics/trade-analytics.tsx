@@ -6,7 +6,7 @@ import { StatsTable } from "./stats-table";
 import { WinnersTable } from "./winners-table";
 import { LosersTable } from "./losers-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BurgerMenu } from "./burger-menu/toggle-button";
+import { BurgerMenu } from "./burger-menu/burger-menu";
 import { DateRange } from "react-day-picker";
 import { format, startOfYear } from "date-fns";
 import { ProfitDistributionChart } from "./profit-distribution-chart";
