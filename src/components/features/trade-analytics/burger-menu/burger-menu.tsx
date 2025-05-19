@@ -7,21 +7,22 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { MoreVertical, X } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { Range } from "./filter-sheet";
 
+// Define props interface for type safety
 type BurgerMenuProps = {
   onExportReport?: () => void;
   onExportTradeblocks?: () => void;
   onExportTransactions?: () => void;
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
-  onPeriodChange: (period: string) => void;
+  period: string;
+  setPeriod: (period: string) => void;
   includeHoldings: boolean;
   setIncludeHoldings: (value: boolean) => void;
-  onApplyFilters: () => void;
+  onApplyFilters: (dateRange: DateRange | undefined, period: string, includeHoldings: boolean) => void;
 };
 
 export function BurgerMenu({
@@ -30,7 +31,8 @@ export function BurgerMenu({
   onExportTransactions = () => console.log("Exporting Transactions as CSV"),
   dateRange,
   setDateRange,
-  onPeriodChange,
+  period,
+  setPeriod,
   includeHoldings,
   setIncludeHoldings,
   onApplyFilters,
@@ -52,10 +54,10 @@ export function BurgerMenu({
 
   // Handle filter application and ensure modal closes
   const handleApplyFilters = useCallback(() => {
-    console.log("Applying filters and closing modal");
+    console.log("Applying filters and closing modal", { dateRange, period, includeHoldings });
     setIsSheetOpen(false); // Close modal before API call
-    onApplyFilters();
-  }, [onApplyFilters]);
+    onApplyFilters(dateRange, period, includeHoldings);
+  }, [dateRange, period, includeHoldings, onApplyFilters]);
 
   // Clean up any lingering Radix UI elements and manage body overflow
   useEffect(() => {
@@ -156,7 +158,6 @@ export function BurgerMenu({
           max-width: 90vw;
           height: 100%;
           padding: 18px;
-          
           overflow-y: auto;
           border-left: 1px solid #e5e7eb; /* border-gray-200 */
           box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
@@ -294,7 +295,8 @@ export function BurgerMenu({
               <Range
                 dateRange={dateRange}
                 setDateRange={setDateRange}
-                onPeriodChange={onPeriodChange}
+                period={period}
+                setPeriod={setPeriod}
                 includeHoldings={includeHoldings}
                 setIncludeHoldings={setIncludeHoldings}
                 onApplyFilters={handleApplyFilters}

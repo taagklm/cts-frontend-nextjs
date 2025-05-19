@@ -103,8 +103,8 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   const [includeHoldings, setIncludeHoldings] = useState<boolean>(true);
   const [analyticsData, setAnalyticsData] = useState<TradeAnalyticsResponse | null>(initialData || null);
   const [error, setError] = useState<string | null>(initialError || null);
-  const [requestArgs, setRequestArgs] = useState<object | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // For forcing re-render
+  const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(!!initialData || !!initialError);
 
   const marketNames: { [key: string]: string } = {
     IB: "Global",
@@ -118,6 +118,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   const fetchAnalytics = useCallback(async () => {
     if (!displayedDateRange?.from) {
       console.log("fetchAnalytics aborted: No valid displayedDateRange.from");
+      setError("Invalid date range selected");
       return;
     }
 
@@ -137,8 +138,11 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(args),
     };
-    // Log API request initiation
-    console.log("API Request (trade-analytics.tsx):", requestDetails);
+    // Log API request details
+    console.log("API Request Initiated (trade-analytics.tsx):", {
+      requestDetails,
+      filterState: { displayedDateRange, displayedPeriod, includeHoldings, displayedMarket },
+    });
 
     try {
       console.log("Sending fetch request to /api/trade-analytics");
@@ -170,25 +174,44 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
 
   // Initial fetch only if no initialData is provided
   useEffect(() => {
-    if (!initialData && !initialError) {
+    if (!isInitialFetchDone) {
+      console.log("Triggering initial fetchAnalytics");
+      fetchAnalytics();
+      setIsInitialFetchDone(true);
+    }
+  }, [fetchAnalytics, isInitialFetchDone]);
+
+  // Fetch analytics when filter states change
+  useEffect(() => {
+    if (isInitialFetchDone) {
+      console.log("Filter states changed, triggering fetchAnalytics:", {
+        displayedDateRange,
+        displayedPeriod,
+        includeHoldings,
+        displayedMarket,
+      });
       fetchAnalytics();
     }
-  }, [fetchAnalytics, initialData, initialError]);
+  }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, isInitialFetchDone]);
 
-  const handleApplyFilters = useCallback(() => {
-    console.log("Handle apply filters triggered in trade-analytics.tsx");
-    setDisplayedDateRange(dateRange);
-    fetchAnalytics();
-  }, [dateRange, fetchAnalytics]);
+  // Handle apply filters by updating filter states
+  const handleApplyFilters = useCallback(
+    (newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
+      console.log("handleApplyFilters triggered in trade-analytics.tsx", {
+        newDateRange,
+        newPeriod,
+        newIncludeHoldings,
+      });
+      setDisplayedDateRange(newDateRange);
+      setDisplayedPeriod(newPeriod);
+      setIncludeHoldings(newIncludeHoldings);
+    },
+    [],
+  );
 
   const handleMarketChange = useCallback((market: string) => {
     console.log("Market changed to:", market);
     setDisplayedMarket(market);
-  }, []);
-
-  const handlePeriodChange = useCallback((period: string) => {
-    console.log("Period changed to:", period);
-    setDisplayedPeriod(period);
   }, []);
 
   const handleTabChange = useCallback((val: string) => {
@@ -243,12 +266,6 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
             <CardTitle className="text-red-500">Error Fetching Trade Analytics</CardTitle>
             <CardDescription>{error || "No data available"}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="font-medium">Request Arguments:</p>
-            <pre className="bg-gray-100 p-2 rounded mt-2 text-sm">
-              {JSON.stringify(requestArgs, null, 2)}
-            </pre>
-          </CardContent>
         </Card>
       </div>
     );
@@ -318,7 +335,8 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
               onExportTransactions={() => console.log("Exporting Transactions as CSV from TradeAnalytics")}
               dateRange={dateRange}
               setDateRange={setDateRange}
-              onPeriodChange={handlePeriodChange}
+              period={displayedPeriod}
+              setPeriod={setDisplayedPeriod}
               includeHoldings={includeHoldings}
               setIncludeHoldings={setIncludeHoldings}
               onApplyFilters={handleApplyFilters}

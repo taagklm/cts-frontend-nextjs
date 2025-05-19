@@ -17,19 +17,20 @@ function normalizeDateToUTC(date: Date): Date {
 export function Range({
   dateRange,
   setDateRange,
-  onPeriodChange,
+  period,
+  setPeriod,
   includeHoldings,
   setIncludeHoldings,
   onApplyFilters,
 }: {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
-  onPeriodChange: (period: string) => void;
+  period: string;
+  setPeriod: (period: string) => void;
   includeHoldings: boolean;
   setIncludeHoldings: (value: boolean) => void;
   onApplyFilters: () => void;
 }) {
-  const [period, setPeriod] = React.useState("yearToDate");
   const [selectedStrategies, setSelectedStrategies] = React.useState<string[]>([]);
   const [isDateRangeValid, setIsDateRangeValid] = React.useState(true);
   const today = normalizeDateToUTC(new Date());
@@ -83,7 +84,6 @@ export function Range({
 
   const handlePeriodChange = (value: string) => {
     setPeriod(value);
-    onPeriodChange(value);
     console.log("Range: handlePeriodChange:", { value });
   };
 
