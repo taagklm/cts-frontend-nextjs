@@ -108,7 +108,7 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
   }
 
   return (
-    <Card className="mb-3 max-w-3xl w-full overflow-visible shadow-none">
+    <Card className="mb-3 max-w-3xl w-full overflow-visible shadow-none pb-0">
       <CardHeader>
         <CardTitle>Profit Distribution</CardTitle>
       </CardHeader>

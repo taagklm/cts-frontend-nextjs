@@ -2,7 +2,6 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
 import { startOfYear } from "date-fns";
 
-// Define dynamic metadata based on trader param
 export async function generateMetadata({
   params,
 }: {
@@ -11,7 +10,7 @@ export async function generateMetadata({
   const { trader } = await params;
   const decodedTrader = decodeURIComponent(trader);
   return {
-    title: "CTS | " + decodedTrader, // e.g., "CTS | OTP Fund"
+    title: "CTS | " + decodedTrader,
     description: `Trade analytics for ${decodedTrader}, including performance metrics and profit distribution.`,
   };
 }
@@ -27,11 +26,9 @@ export default async function TraderPage({
   const { ibAccountNo, phAccountNo } = await searchParams;
   const decodedTrader = decodeURIComponent(trader);
 
-  // Use query parameters or fallback to empty strings
   const accountNo = ibAccountNo || "";
   const phAccountNoValue = phAccountNo || "";
 
-  // Validate account numbers
   if (!accountNo) {
     return (
       <div className="flex items-center justify-center min-w-[48rem]">
@@ -45,7 +42,6 @@ export default async function TraderPage({
     );
   }
 
-  // Fetch trade analytics
   let analyticsData = null;
   let error = null;
   try {

@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardHeader, CardDescription, CardContent } from "../ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
-import { format } from "date-fns";
+import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { mockDailyPnl } from "@/mock-data/daily-pnl";
 
@@ -22,6 +23,7 @@ interface DailyPnlData {
 
 interface EquityCurveProps {
   accountNo: string;
+  phAccountNo: string;
   dateRange?: DateRange;
   market: string;
 }
@@ -41,7 +43,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function EquityCurve({ accountNo, dateRange, market }: EquityCurveProps) {
+export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: EquityCurveProps) {
+  const today = new Date();
+  const [defaultDateRange] = useState<DateRange>({
+    from: startOfYear(today), // January 1, 2025
+    to: today, // Current date (e.g., May 19, 2025)
+  });
+
+  const effectiveDateRange = dateRange || defaultDateRange;
+
   const marketNames: { [key: string]: string } = {
     IB: "Global",
     US: "United States",
@@ -55,8 +65,6 @@ export function EquityCurve({ accountNo, dateRange, market }: EquityCurveProps) 
       case "PH":
         return "PHP";
       case "HK":
-        return "HKD";
-      case "JP":
         return "JPY";
       case "US":
       case "IB":
@@ -65,28 +73,31 @@ export function EquityCurve({ accountNo, dateRange, market }: EquityCurveProps) 
     }
   };
 
-  // Filter mockDailyPnl by accountNo
-  const accountData = mockDailyPnl.find((data) => data.account === accountNo) || {
-    account: accountNo,
-    currency: "USD",
+  // Select account based on market
+  const selectedAccount = market === "PH" && phAccountNo ? phAccountNo : accountNo;
+
+  // Filter mockDailyPnl by selected account
+  const accountData = mockDailyPnl.find((data) => data.account === selectedAccount) || {
+    account: selectedAccount,
+    currency: getCurrency(),
     dailyPnl: [],
   };
 
-  // Filter by dateRange if provided
-  const filteredDailyPnl = dateRange?.from && dateRange?.to
+  // Filter by date range
+  const filteredDailyPnl = effectiveDateRange.from && effectiveDateRange.to
     ? accountData.dailyPnl.filter((entry) => {
         const entryDate = new Date(entry.date);
-        return entryDate >= dateRange.from! && entryDate <= dateRange.to!;
+        return entryDate >= effectiveDateRange.from! && entryDate <= effectiveDateRange.to!;
       })
     : accountData.dailyPnl;
 
   if (filteredDailyPnl.length === 0) {
     return (
       <div className="flex items-center justify-center min-w-[48rem]">
-        <Card className="max-w-3xl w-full">
+        <Card className="max-w-3xl w-full pb-0">
           <CardHeader>
             <h1 className="text-2xl font-bold">Equity Curve</h1>
-            <CardDescription>No equity data available for account: {accountNo}</CardDescription>
+            <CardDescription>No equity data available for account: {selectedAccount}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -111,11 +122,11 @@ export function EquityCurve({ accountNo, dateRange, market }: EquityCurveProps) 
               <h1 className="text-2xl font-bold">Equity Curve</h1>
             </div>
           </div>
-          <CardDescription className="pt-0">
-            {`${marketNames[market] || "Global"} Market from ${format(new Date(filteredDailyPnl[0].date), "MMMM d, yyyy")} to ${format(new Date(filteredDailyPnl[filteredDailyPnl.length - 1].date), "MMMM d, yyyy")}. The values displayed are in ${getCurrency()}.`}
+          <CardDescription className="pb-0 pt-0">
+            {`${marketNames[market] || "Global"} Market from ${format(effectiveDateRange.from!, "MMMM d, yyyy")} to ${format(effectiveDateRange.to!, "MMMM d, yyyy")}. The values displayed are in ${getCurrency()}.`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="rounded-lg border bg-card text-card-foreground shadow-sm mr-6 ml-6 shadow-none pb-1">
+        <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
           <ChartContainer config={chartConfig}>
             <AreaChart
               data={chartData}

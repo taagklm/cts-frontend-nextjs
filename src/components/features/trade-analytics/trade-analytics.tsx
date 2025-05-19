@@ -189,12 +189,19 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
     }
   }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, isInitialFetchDone]);
 
-  const handleApplyFilters = useCallback((newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
-    console.log("Handle apply filters triggered", { newDateRange, newPeriod, newIncludeHoldings });
-    setDisplayedDateRange(newDateRange);
-    setDisplayedPeriod(newPeriod);
-    setIncludeHoldings(newIncludeHoldings);
-  }, []);
+  const handleApplyFilters = useCallback(
+    (newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
+      console.log("handleApplyFilters triggered in trade-analytics.tsx", {
+        newDateRange,
+        newPeriod,
+        newIncludeHoldings,
+      });
+      setDisplayedDateRange(newDateRange);
+      setDisplayedPeriod(newPeriod);
+      setIncludeHoldings(newIncludeHoldings);
+    },
+    [],
+  );
 
   const handleMarketChange = useCallback((market: string) => {
     console.log("Market changed to:", market);
@@ -299,7 +306,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   console.log("Mapped Active Data:", activeData);
 
   return (
-    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4">
+    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4 pb-0">
       <Tabs
         value={displayedMarket}
         onValueChange={handleMarketChange}
@@ -313,7 +320,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           <TabsTrigger value="PH">PH</TabsTrigger>
         </TabsList>
       </Tabs>
-      <Card className="max-w-3xl w-full">
+      <Card className="max-w-3xl w-full pb-3">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">
@@ -332,7 +339,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
               onApplyFilters={handleApplyFilters}
             />
           </div>
-          <CardDescription className="pb-2 pt-0">
+          <CardDescription className="pb-0 pt-0">
             {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
           </CardDescription>
           <Tabs
@@ -367,7 +374,13 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           <ProfitDistributionChart data={activeData} />
         </CardContent>
       </Card>
-      <EquityCurve accountNo={accountNo} dateRange={displayedDateRange} market={displayedMarket} />
+      
+      <EquityCurve
+        accountNo={accountNo}
+        phAccountNo={phAccountNo}
+        dateRange={displayedDateRange}
+        market={displayedMarket}
+      />
     </div>
   );
 }
