@@ -116,7 +116,6 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
 
   // Fetch analytics data when filters are applied
   const fetchAnalytics = useCallback(async () => {
-    console.log("fetchAnalytics started", { displayedDateRange, displayedMarket, includeHoldings });
     if (!displayedDateRange?.from) {
       console.log("fetchAnalytics aborted: No valid displayedDateRange.from");
       return;
@@ -132,16 +131,14 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
       tags: null,
     };
 
-    console.log("Preparing Trade Analytics with args:", args);
-    setRequestArgs(args);
-
     const requestDetails = {
       url: "/api/trade-analytics",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(args),
     };
-    console.log("API Request Details:", requestDetails);
+    // Log API request initiation
+    console.log("API Request (trade-analytics.tsx):", requestDetails);
 
     try {
       console.log("Sending fetch request to /api/trade-analytics");
@@ -152,21 +149,21 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
         signal: AbortSignal.timeout(10000),
       });
 
-      console.log("Fetch response received:", { status: response.status, ok: response.ok });
+      console.log("Fetch response received (trade-analytics.tsx):", { status: response.status, ok: response.ok });
       const result = await response.json();
-      console.log("API Response:", result);
+      console.log("API Response (trade-analytics.tsx):", result);
 
       if (response.ok) {
         setAnalyticsData(result);
         setError(null);
         setRefreshKey((prev) => prev + 1);
       } else {
-        throw new Error(result.error || "Failed to fetch analytics data");
+        throw new Error(result.error || "Failed to fetch analytics data (trade-analytics.tsx)");
       }
     } catch (err) {
-      console.error("Error fetching analytics:", err);
+      console.error("Error fetching analytics (trade-analytics.tsx):", err);
       setAnalyticsData(null);
-      setError(err instanceof Error ? err.message : "Failed to fetch analytics data");
+      setError(err instanceof Error ? err.message : "Failed to fetch analytics data (trade-analytics.tsx)");
       setRefreshKey((prev) => prev + 1);
     }
   }, [displayedMarket, displayedDateRange, includeHoldings, accountNo, phAccountNo]);
@@ -179,7 +176,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   }, [fetchAnalytics, initialData, initialError]);
 
   const handleApplyFilters = useCallback(() => {
-    console.log("Handle apply filters triggered");
+    console.log("Handle apply filters triggered in trade-analytics.tsx");
     setDisplayedDateRange(dateRange);
     fetchAnalytics();
   }, [dateRange, fetchAnalytics]);
@@ -329,18 +326,6 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           </div>
           <CardDescription className="pb-2 pt-0">
             {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
-            {/* <br />
-            Account: {accountNo}
-            {phAccountNo && (
-              <>
-                <br />
-                PH Account: {phAccountNo}
-              </>
-            )}
-            <br />
-            <span className="text-sm text-gray-500">
-              {displayRawDateRange(displayedDateRange)}
-            </span> */}
           </CardDescription>
           <Tabs
             key={`tabs-${refreshKey}`}
