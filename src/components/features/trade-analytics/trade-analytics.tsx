@@ -102,6 +102,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   const [error, setError] = useState<string | null>(initialError || null);
   const [requestArgs, setRequestArgs] = useState<object | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(!!initialData || !!initialError);
 
   const marketNames: { [key: string]: string } = {
     IB: "Global",
@@ -115,6 +116,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
     console.log("fetchAnalytics started", { displayedDateRange, displayedMarket, includeHoldings });
     if (!displayedDateRange?.from) {
       console.log("fetchAnalytics aborted: No valid displayedDateRange.from");
+      setError("Invalid date range selected");
       return;
     }
 
@@ -168,25 +170,35 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   }, [displayedMarket, displayedDateRange, includeHoldings, accountNo, phAccountNo]);
 
   useEffect(() => {
-    if (!initialData && !initialError) {
+    if (!isInitialFetchDone) {
+      console.log("Triggering initial fetchAnalytics");
+      fetchAnalytics();
+      setIsInitialFetchDone(true);
+    }
+  }, [fetchAnalytics, isInitialFetchDone]);
+
+  useEffect(() => {
+    if (isInitialFetchDone) {
+      console.log("Filter states changed, triggering fetchAnalytics:", {
+        displayedDateRange,
+        displayedPeriod,
+        includeHoldings,
+        displayedMarket,
+      });
       fetchAnalytics();
     }
-  }, [fetchAnalytics, initialData, initialError]);
+  }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, isInitialFetchDone]);
 
-  const handleApplyFilters = useCallback(() => {
-    console.log("Handle apply filters triggered");
-    setDisplayedDateRange(dateRange);
-    fetchAnalytics();
-  }, [dateRange, fetchAnalytics]);
+  const handleApplyFilters = useCallback((newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
+    console.log("Handle apply filters triggered", { newDateRange, newPeriod, newIncludeHoldings });
+    setDisplayedDateRange(newDateRange);
+    setDisplayedPeriod(newPeriod);
+    setIncludeHoldings(newIncludeHoldings);
+  }, []);
 
   const handleMarketChange = useCallback((market: string) => {
     console.log("Market changed to:", market);
     setDisplayedMarket(market);
-  }, []);
-
-  const handlePeriodChange = useCallback((period: string) => {
-    console.log("Period changed to:", period);
-    setDisplayedPeriod(period);
   }, []);
 
   const handleTabChange = useCallback((val: string) => {
@@ -287,7 +299,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
   console.log("Mapped Active Data:", activeData);
 
   return (
-    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4 pb-0">
+    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4">
       <Tabs
         value={displayedMarket}
         onValueChange={handleMarketChange}
@@ -301,8 +313,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           <TabsTrigger value="PH">PH</TabsTrigger>
         </TabsList>
       </Tabs>
-
-      <Card className="max-w-3xl w-full pb-3">
+      <Card className="max-w-3xl w-full">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">
@@ -314,7 +325,8 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
               onExportTransactions={() => console.log("Exporting Transactions as CSV from TradeAnalytics")}
               dateRange={dateRange}
               setDateRange={setDateRange}
-              onPeriodChange={handlePeriodChange}
+              period={displayedPeriod}
+              setPeriod={setDisplayedPeriod}
               includeHoldings={includeHoldings}
               setIncludeHoldings={setIncludeHoldings}
               onApplyFilters={handleApplyFilters}
@@ -327,7 +339,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
             key={`tabs-${refreshKey}`}
             value={activeTab}
             onValueChange={handleTabChange}
-            className="pt-0 pb-0"
+            className="pt-1 pb-0"
           >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="longshort">LONG & SHORT</TabsTrigger>
@@ -336,8 +348,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
             </TabsList>
           </Tabs>
         </CardHeader>
-
-        <CardContent className="pt-0 pb-0">
+        <CardContent className="pb-0 pt-0">
           <div className="grid grid-cols-9">
             <div className="col-span-5">
               <StatsTable data={activeData} selectedMarket={displayedMarket} />
@@ -356,7 +367,6 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           <ProfitDistributionChart data={activeData} />
         </CardContent>
       </Card>
-
       <EquityCurve accountNo={accountNo} dateRange={displayedDateRange} market={displayedMarket} />
     </div>
   );

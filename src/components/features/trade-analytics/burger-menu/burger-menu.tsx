@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { MoreVertical, X } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { Range } from "./filter-sheet";
@@ -18,10 +17,11 @@ type BurgerMenuProps = {
   onExportTransactions?: () => void;
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
-  onPeriodChange: (period: string) => void;
+  period: string;
+  setPeriod: (period: string) => void;
   includeHoldings: boolean;
   setIncludeHoldings: (value: boolean) => void;
-  onApplyFilters: () => void;
+  onApplyFilters: (dateRange: DateRange | undefined, period: string, includeHoldings: boolean) => void;
 };
 
 export function BurgerMenu({
@@ -30,7 +30,8 @@ export function BurgerMenu({
   onExportTransactions = () => console.log("Exporting Transactions as CSV"),
   dateRange,
   setDateRange,
-  onPeriodChange,
+  period,
+  setPeriod,
   includeHoldings,
   setIncludeHoldings,
   onApplyFilters,
@@ -38,35 +39,28 @@ export function BurgerMenu({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Handle modal open/close with debugging
   const handleOpenChange = useCallback((open: boolean) => {
     console.log("Custom modal open state changing to:", open);
     setIsSheetOpen(open);
   }, []);
 
-  // Handle dropdown open/close
   const handleDropdownOpenChange = useCallback((open: boolean) => {
     console.log("Burger menu dropdown open state changing to:", open);
     setIsDropdownOpen(open);
   }, []);
 
-  // Handle filter application and ensure modal closes
   const handleApplyFilters = useCallback(() => {
-    console.log("Applying filters and closing modal");
-    setIsSheetOpen(false); // Close modal before API call
-    onApplyFilters();
-  }, [onApplyFilters]);
+    console.log("Applying filters and closing modal", { dateRange, period, includeHoldings });
+    setIsSheetOpen(false);
+    onApplyFilters(dateRange, period, includeHoldings);
+  }, [dateRange, period, includeHoldings, onApplyFilters]);
 
-  // Clean up any lingering Radix UI elements and manage body overflow
   useEffect(() => {
     if (isSheetOpen || isDropdownOpen) {
-      // Prevent body scrollbar when modal or dropdown is open
       document.body.style.overflow = "hidden";
     } else {
-      // Restore body scroll when both are closed
       document.body.style.overflow = "";
       setTimeout(() => {
-        // Target Radix UI SheetContent and overlays
         const blockers = document.querySelectorAll(
           '[data-radix-dialog-content], [data-radix-dialog-overlay], .SheetOverlay, [class*="overlay"], [class*="Overlay"], [class*="modal"], [class*="backdrop"], [class*="dialog"], [class*="popup"], [class*="popover"]'
         );
@@ -90,7 +84,6 @@ export function BurgerMenu({
           (blocker as HTMLElement).style.pointerEvents = "none";
         });
 
-        // Target high z-index elements
         const allElements = document.querySelectorAll("*");
         allElements.forEach((el, index) => {
           const computedStyle = window.getComputedStyle(el);
@@ -119,18 +112,16 @@ export function BurgerMenu({
             (el as HTMLElement).style.pointerEvents = "none";
           }
         });
-      }, 200); // Wait for modal to close
+      }, 200);
     }
-    // Cleanup on unmount
     return () => {
       document.body.style.overflow = "";
     };
   }, [isSheetOpen, isDropdownOpen]);
 
-  // Handle menu trigger click
   const handleMenuTriggerClick = (e: React.MouseEvent) => {
     console.log("Burger menu trigger clicked");
-    e.stopPropagation(); // Prevent event bubbling
+    e.stopPropagation();
   };
 
   return (
@@ -151,31 +142,30 @@ export function BurgerMenu({
         }
         .custom-modal-content {
           background: white;
-          color: #111827; /* text-gray-900 */
+          color: #111827;
           width: 700px;
           max-width: 90vw;
           height: 100%;
           padding: 18px;
-          
           overflow-y: auto;
-          border-left: 1px solid #e5e7eb; /* border-gray-200 */
+          border-left: 1px solid #e5e7eb;
           box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
           z-index: 51;
           transform: translateX(100%);
           transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-          scrollbar-width: none; /* Hide scrollbar for Firefox */
-          -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         .custom-modal-content::-webkit-scrollbar {
-          display: none; /* Hide scrollbar for Chrome/Safari */
+          display: none;
         }
         .custom-modal-content.open {
           transform: translateX(0);
         }
         .dark .custom-modal-content {
-          background: #020817; /* custom gray-950 */
-          color: #f9fafb; /* dark:text-gray-100 */
-          border-left: 1px solid #1f2937; /* dark:border-gray-800 */
+          background: #020817;
+          color: #f9fafb;
+          border-left: 1px solid #1f2937;
         }
         .custom-modal-content.hidden {
           transform: translateX(100%);
@@ -189,16 +179,16 @@ export function BurgerMenu({
           border: none;
           cursor: pointer;
           padding: 4px;
-          color: #111827; /* text-gray-900 */
+          color: #111827;
         }
         .dark .custom-modal-close {
-          color: #f9fafb; /* dark:text-gray-100 */
+          color: #f9fafb;
         }
         .custom-modal-close:hover {
-          color: #4b5563; /* text-gray-600 */
+          color: #4b5563;
         }
         .dark .custom-modal-close:hover {
-          color: #d1d5db; /* dark:text-gray-300 */
+          color: #d1d5db;
         }
         .custom-modal-header h2 {
           font-size: 1.125rem;
@@ -206,29 +196,27 @@ export function BurgerMenu({
         }
         .custom-modal-header p {
           font-size: 0.875rem;
-          color: #6b7280; /* text-gray-500 */
+          color: #6b7280;
         }
         .dark .custom-modal-header p {
-          color: #9ca3af; /* dark:text-gray-400 */
+          color: #9ca3af;
         }
-        /* Constrain dropdowns within modal */
         .custom-modal-content [data-radix-popper-content-wrapper] {
-          max-height: calc(100vh - 48px); /* Account for padding */
+          max-height: calc(100vh - 48px);
           overflow-y: auto;
-          z-index: 52; /* Above modal content */
+          z-index: 52;
           position: absolute;
         }
-        /* Constrain burger menu dropdown */
         .burger-dropdown-content {
-          max-height: calc(100vh - 48px); /* Account for padding */
+          max-height: calc(100vh - 48px);
           overflow-y: auto;
-          z-index: 52; /* Above page content */
+          z-index: 52;
           position: absolute;
-          scrollbar-width: none; /* Hide scrollbar for Firefox */
-          -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         .burger-dropdown-content::-webkit-scrollbar {
-          display: none; /* Hide scrollbar for Chrome/Safari */
+          display: none;
         }
       `}</style>
 
@@ -294,7 +282,8 @@ export function BurgerMenu({
               <Range
                 dateRange={dateRange}
                 setDateRange={setDateRange}
-                onPeriodChange={onPeriodChange}
+                period={period}
+                setPeriod={setPeriod}
                 includeHoldings={includeHoldings}
                 setIncludeHoldings={setIncludeHoldings}
                 onApplyFilters={handleApplyFilters}
