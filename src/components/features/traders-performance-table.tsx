@@ -33,7 +33,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { mockData } from "@/mock-data/traders-performance";
 
 export type TradersPerformanceTableData = {
   trader: string;

@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
 import { startOfYear } from "date-fns";
+import { mockData as analyticsMockData } from "@/mock-data/trader-trade-analytics";
+import { TraderPageClient } from "@/components/features/trader-page-client";
 
 export async function generateMetadata({
   params,
@@ -15,7 +16,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function TraderPage({
+export default async function Page({
   params,
   searchParams,
 }: {
@@ -42,7 +43,7 @@ export default async function TraderPage({
     );
   }
 
-  let analyticsData = null;
+  let analyticsData = analyticsMockData;
   let error = null;
   try {
     const today = new Date();
@@ -62,13 +63,15 @@ export default async function TraderPage({
       analyticsData = await response.json();
     } else {
       error = (await response.json()).error || "Failed to fetch trade analytics";
+      analyticsData = analyticsMockData; // Fallback to mock data
     }
   } catch (err) {
     error = err instanceof Error ? err.message : "Network error";
+    analyticsData = analyticsMockData; // Fallback to mock data
   }
 
   return (
-    <TradeAnalytics
+    <TraderPageClient
       trader={decodedTrader}
       accountNo={accountNo}
       phAccountNo={phAccountNoValue}

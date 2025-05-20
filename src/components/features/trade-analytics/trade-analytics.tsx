@@ -8,13 +8,8 @@ import { LosersTable } from "./losers-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BurgerMenu } from "./burger-menu/burger-menu";
 import { DateRange } from "react-day-picker";
-import { format, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { ProfitDistributionChart } from "./profit-distribution-chart";
-import { EquityCurve } from "../equity-curve";
-
-function normalizeDateToUTC(date: Date): Date {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-}
 
 interface TradeAnalyticsResponse {
   longAndShort: TradeAnalyticsBundle;
@@ -82,20 +77,24 @@ interface TradeAnalyticsProps {
   phAccountNo: string;
   initialData?: TradeAnalyticsResponse | null;
   initialError?: string | null;
+  displayedDateRange: DateRange | undefined;
+  setDisplayedDateRange: (range: DateRange | undefined) => void;
+  displayedMarket: string;
+  handleMarketChange: (market: string) => void;
 }
 
-export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, initialError }: TradeAnalyticsProps) {
+export function TradeAnalytics({
+  trader,
+  accountNo,
+  phAccountNo,
+  initialData,
+  initialError,
+  displayedDateRange,
+  setDisplayedDateRange,
+  displayedMarket,
+  handleMarketChange,
+}: TradeAnalyticsProps) {
   const [activeTab, setActiveTab] = useState<"longshort" | "long" | "short">("longshort");
-  const [displayedMarket, setDisplayedMarket] = useState("IB");
-  const today = new Date();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: normalizeDateToUTC(startOfYear(today)),
-    to: normalizeDateToUTC(today),
-  });
-  const [displayedDateRange, setDisplayedDateRange] = useState<DateRange | undefined>({
-    from: normalizeDateToUTC(startOfYear(today)),
-    to: normalizeDateToUTC(today),
-  });
   const [displayedPeriod, setDisplayedPeriod] = useState<string>("yearToDate");
   const [includeHoldings, setIncludeHoldings] = useState<boolean>(true);
   const [analyticsData, setAnalyticsData] = useState<TradeAnalyticsResponse | null>(initialData || null);
@@ -200,13 +199,8 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
       setDisplayedPeriod(newPeriod);
       setIncludeHoldings(newIncludeHoldings);
     },
-    [],
+    [setDisplayedDateRange],
   );
-
-  const handleMarketChange = useCallback((market: string) => {
-    console.log("Market changed to:", market);
-    setDisplayedMarket(market);
-  }, []);
 
   const handleTabChange = useCallback((val: string) => {
     console.log("Tab changed to:", val);
@@ -307,19 +301,6 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
 
   return (
     <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4 pb-0">
-      <Tabs
-        value={displayedMarket}
-        onValueChange={handleMarketChange}
-        className="w-full max-w-3xl"
-      >
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="IB">IB</TabsTrigger>
-          <TabsTrigger value="US">US</TabsTrigger>
-          <TabsTrigger value="HK">HK</TabsTrigger>
-          <TabsTrigger value="JP">JP</TabsTrigger>
-          <TabsTrigger value="PH">PH</TabsTrigger>
-        </TabsList>
-      </Tabs>
       <Card className="max-w-3xl w-full pb-3">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
@@ -330,8 +311,8 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
               onExportReport={() => console.log("Exporting Report as PDF from TradeAnalytics")}
               onExportTradeblocks={() => console.log("Exporting Tradeblocks as CSV from TradeAnalytics")}
               onExportTransactions={() => console.log("Exporting Transactions as CSV from TradeAnalytics")}
-              dateRange={dateRange}
-              setDateRange={setDateRange}
+              dateRange={displayedDateRange}
+              setDateRange={setDisplayedDateRange}
               period={displayedPeriod}
               setPeriod={setDisplayedPeriod}
               includeHoldings={includeHoldings}
@@ -339,7 +320,7 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
               onApplyFilters={handleApplyFilters}
             />
           </div>
-          <CardDescription className="pb-0 pt-0">
+          <CardDescription className="pb-2 pt-0">
             {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
           </CardDescription>
           <Tabs
@@ -374,13 +355,6 @@ export function TradeAnalytics({ trader, accountNo, phAccountNo, initialData, in
           <ProfitDistributionChart data={activeData} />
         </CardContent>
       </Card>
-      
-      <EquityCurve
-        accountNo={accountNo}
-        phAccountNo={phAccountNo}
-        dateRange={displayedDateRange}
-        market={displayedMarket}
-      />
     </div>
   );
 }

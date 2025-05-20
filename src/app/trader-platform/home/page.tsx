@@ -1,19 +1,19 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
 import { startOfYear } from "date-fns";
-import { mockData as analyticsMockData } from "@/mock-data/trader-trade-analytics"; // Adjust path to your TradeAnalytics mockData file
+import { mockData as analyticsMockData } from "@/mock-data/trader-trade-analytics";
+import { TraderPageClient } from "@/components/features/trader-page-client";
 
-// Define static metadata for the hardcoded trader
+// Define static metadata for the homepage
 export const metadata = {
   title: "CTS | Prop Trading Fund",
   description: "Trade analytics for Prop Trading Fund, including performance metrics and profit distribution.",
 };
 
-export default async function TraderPage() {
-  // Hardcode trader details
-  const decodedTrader = "Prop Trading Fund";
-  const accountNo = "U1673041"; // IB account number for Prop Trading Fund
-  const phAccountNoValue = "PHU1673041"; // PH account number for Prop Trading Fund
+export default async function Page() {
+  // Hardcode trader details (same as TraderPage for consistency)
+  const trader = "Prop Trading Fund";
+  const accountNo = "U1673041"; // IB account number
+  const phAccountNo = "PHU1673041"; // PH account number
 
   // Validate account number
   if (!accountNo) {
@@ -22,7 +22,7 @@ export default async function TraderPage() {
         <Card className="max-w-3xl w-full">
           <CardHeader>
             <CardTitle className="text-red-500">Error</CardTitle>
-            <CardDescription>No IB account number provided for trader: {decodedTrader}</CardDescription>
+            <CardDescription>No IB account number provided for trader: {trader}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -30,7 +30,7 @@ export default async function TraderPage() {
   }
 
   // Fetch trade analytics or use mock data
-  let analyticsData = analyticsMockData; // Default to mockData.longAndShort
+  let analyticsData = analyticsMockData;
   let error = null;
 
   try {
@@ -59,13 +59,12 @@ export default async function TraderPage() {
   }
 
   return (
-    <TradeAnalytics
-      trader={decodedTrader}
+    <TraderPageClient
+      trader={trader}
       accountNo={accountNo}
-      phAccountNo={phAccountNoValue}
+      phAccountNo={phAccountNo}
       initialData={analyticsData}
       initialError={error}
     />
-    
   );
 }
