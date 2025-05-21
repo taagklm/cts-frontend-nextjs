@@ -6,8 +6,7 @@ import TradeblocksTable from "@/components/features/tradeblocks";
 import { mockTradeblocks } from "@/mock-data/tradeblocks";
 
 export const metadata = {
-  title: "CTS | Journal",
-  description: "Trader Journal",
+  title: "CTS | Tradeblocks",
 };
 
 export default async function Page() {
