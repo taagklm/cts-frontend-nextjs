@@ -1,12 +1,12 @@
 "use client";
 
-import { DailyCalendarReturn } from "@/components/features/daily-calendar-return";
 import { EquityCurve } from "@/components/features/equity-curve";
 import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
 import { startOfYear } from "date-fns";
 import { useState, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TradeCalendar } from "./daily-calendar-return";
 
 interface TraderPageClientProps {
   trader: string;
@@ -36,11 +36,11 @@ export function TraderPageClient({
   }, []);
 
   return (
-    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4 pb-0">
+    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4 pb-6 px-4">
       <Tabs
         value={displayedMarket}
         onValueChange={handleMarketChange}
-        className="w-full max-w-3xl"
+        className="w-full max-w-6xl"
       >
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="IB">IB</TabsTrigger>
@@ -50,7 +50,7 @@ export function TraderPageClient({
           <TabsTrigger value="PH">PH</TabsTrigger>
         </TabsList>
       </Tabs>
-      
+
       <TradeAnalytics
         trader={trader}
         accountNo={accountNo}
@@ -65,10 +65,9 @@ export function TraderPageClient({
       <EquityCurve
         accountNo={accountNo}
         phAccountNo={phAccountNo}
-        dateRange={displayedDateRange}
         market={displayedMarket}
       />
-      <DailyCalendarReturn selected={displayedDateRange} onSelect={setDisplayedDateRange} />
+      <TradeCalendar />
     </div>
   );
 }
