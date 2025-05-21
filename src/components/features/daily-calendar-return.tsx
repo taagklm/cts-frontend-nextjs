@@ -102,7 +102,7 @@ export function TradeCalendar() {
     return weekSummaries.map((summary, index) => {
       // Calculate the vertical position (top) for each week summary, centering it in the row
       const rowHeight = 96 + 9; // h-24 (96px) + mt-1 (4px) + m-[2px] (4px vertically)
-      const headerHeight = 65; // Approximate height of the header row (head_row) + mb-2
+      const headerHeight = 70; // Approximate height of the header row (head_row) + mb-2
       const summaryHeight = 96; // Match the height of the day cells (h-24 = 96px)
       const topPosition =
         headerHeight + index * rowHeight + (rowHeight - summaryHeight) / 2;
@@ -124,7 +124,7 @@ export function TradeCalendar() {
   };
 
   return (
-    <Card className="max-w-6xl w-full">
+    <Card className="max-w-6xl w-full mt-0">
       <CardHeader>
         <CardTitle className="text-2xl">Daily Calendar Return</CardTitle>
         <CardDescription>
@@ -133,7 +133,7 @@ export function TradeCalendar() {
       </CardHeader>
 
       <CardContent>
-        <div className="flex items-center justify-between mb-4 px-6">
+        <div className="flex items-center justify-between">
           <button
             onClick={() =>
               setCurrentMonth(
@@ -195,29 +195,31 @@ export function TradeCalendar() {
                   );
                 },
                 Head: () => (
-                  <div className="flex mb-2">
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Sun
-                    </div>
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Mon
-                    </div>
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Tue
-                    </div>
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Wed
-                    </div>
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Thu
-                    </div>
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Fri
-                    </div>
-                    <div className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                      Sat
-                    </div>
-                  </div>
+                  <thead className="flex mb-2">
+                    <tr className="flex w-full">
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Sun
+                      </th>
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Mon
+                      </th>
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Tue
+                      </th>
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Wed
+                      </th>
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Thu
+                      </th>
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Fri
+                      </th>
+                      <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
+                        Sat
+                      </th>
+                    </tr>
+                  </thead>
                 ),
               }}
               classNames={{
@@ -238,10 +240,10 @@ export function TradeCalendar() {
                 day_disabled: "text-muted-foreground opacity-50",
                 day_hidden: "invisible",
               }}
-              className="pr-4 pl-0 pb-0"
+              className="pt-4 pb-0 pr-0 pl-0"
             />
           </div>
-          <div className="w-24 pb-0">
+          <div className="w-28">
             {renderWeekSummaries()}
           </div>
         </div>
