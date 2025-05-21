@@ -26,19 +26,19 @@ export function WinnersTable({
   );
 
   return (
-    <div className="flex items-center justify-center pb-0">
-      <Card className="max-w-3xl w-full overflow-visible shadow-none">
-        <CardContent className="p-2">
+    <div className="flex items-center justify-center pb-0 ">
+      <Card className="max-w-3xl w-full overflow-visible shadow-none pt-0 pb-1">
+        <CardContent className="pr-2 pl-2 pt-0 pb-0">
           <Table>
             <TableBody>
-              <TableRow className="text-sm">
-                <TableCell colSpan={3} className="text-center font-semibold py-1 border-b">
+              <TableRow className="text-sm font-semibold">
+                <TableCell colSpan={3} className="text-center py-3 border-b">
                   Top 5 Winners
                 </TableCell>
               </TableRow>
               {rows.map((item, index) => (
-                <TableRow key={index} className="text-sm">
-                  <TableCell className="text-left py-1">
+                <TableRow key={index} className="text-sm font-normal">
+                  <TableCell className="text-left py-2">
                     {item
                       ? new Date(item.dateEntered).toLocaleDateString("en-US", {
                           month: "short",
@@ -47,11 +47,11 @@ export function WinnersTable({
                         })
                       : "N/A"}
                   </TableCell>
-                  <TableCell className="font-medium text-left py-1">
+                  <TableCell className="font-semibold text-left py-2">
                     {item ? item.symbol : ""}
                   </TableCell>
                   <TableCell
-                    className={`text-right py-1 ${
+                    className={`text-right py-2 ${
                       item && item.totalReturn < 0 ? "text-[#FF5252]" : "text-[#4CAF50]"
                     }`}
                   >

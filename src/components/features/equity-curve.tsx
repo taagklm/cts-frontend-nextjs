@@ -31,7 +31,11 @@ interface EquityCurveProps {
 const chartConfig = {
   totalPnl: {
     label: "Total P&L",
-    color: "#2dd4bf",
+    color: "#4CAF50", // Green matching StatsTable and ProfitDistributionChart
+  },
+  negativePnl: {
+    label: "Negative P&L",
+    color: "#FF5252", // Red matching StatsTable and ProfitDistributionChart
   },
 } satisfies ChartConfig;
 
@@ -39,7 +43,7 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
   const today = new Date();
   const [defaultDateRange] = useState<DateRange>({
     from: startOfYear(today), // January 1, 2025
-    to: today, // May 21, 2025
+    to: today, // May 22, 2025
   });
 
   const effectiveDateRange = dateRange || defaultDateRange;
@@ -103,7 +107,7 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
-    <div className="flex items-center justify-center min-w-[48rem] pb-6">
+    <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
       <Card className="max-w-3xl w-full">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
@@ -132,31 +136,44 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
                 bottom: 10,
               }}
             >
+              <defs>
+                <linearGradient id="fillPositive" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.2} />
+                </linearGradient>
+                <linearGradient id="fillNegative" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#FF5252" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#FF5252" stopOpacity={0.2} />
+                </linearGradient>
+              </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
+                tickMargin={10}
+                fontSize={12}
                 tickFormatter={(date) => format(date, "MMM d")}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
+                tickMargin={10}
+                fontSize={12}
                 domain={[-2000, 2500]}
                 ticks={[-2000, -1500, -1000, -500, 0, 500, 1000, 1500, 2000, 2500]}
-                tickFormatter={(value) => value.toFixed(2)}
+                tickFormatter={(value) => value.toFixed(0)}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
               <Area
                 dataKey="totalPnl"
                 name="Total P&L"
                 type="linear"
-                stroke="#2dd4bf"
-                fill="#2dd4bf"
-                fillOpacity={0.2}
-                stackId="1"
+                stroke="#4CAF50"
+                fill="url(#fillPositive)"
+                fillOpacity={0.3}
+                strokeWidth={2}
+                dot={false}
                 connectNulls
                 isAnimationActive={false}
               />

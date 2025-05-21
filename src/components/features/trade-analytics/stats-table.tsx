@@ -56,8 +56,8 @@ export function StatsTable({
 
   return (
     <div className="flex items-center justify-center pr-3 pb-3">
-      <Card className="max-w-3xl w-full overflow-visible shadow-none">
-        <CardContent className="p-2">
+      <Card className="max-w-3xl w-full overflow-visible shadow-none pt-0 pb-0">
+        <CardContent className="pr-2 pl-2 pt-0 pb-0">
           <Table>
             <TableBody>
               {colsNames
@@ -74,9 +74,9 @@ export function StatsTable({
                   }
 
                   return (
-                    <TableRow key={index} className="text-sm">
-                      <TableCell className="font-medium py-1">{colName}</TableCell>
-                      <TableCell className={`text-right py-1 ${shouldColorCode(colName, value)}`}>
+                    <TableRow key={index} className="text-sm font-normal">
+                      <TableCell className="font-semibold py-2 text-left">{colName}</TableCell>
+                      <TableCell className={`text-right py-2 ${shouldColorCode(colName, value)}`}>
                         {formatValue(value, colName)}
                       </TableCell>
                     </TableRow>

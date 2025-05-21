@@ -250,12 +250,12 @@ export function TradeAnalytics({
       <div className="flex items-center justify-center min-w-[48rem]">
         <Card className="max-w-3xl w-full">
           <CardHeader>
-            <CardTitle className="text-red-500">Error Fetching Trade Analytics</CardTitle>
-            <CardDescription>{error || "No data available"}</CardDescription>
+            <CardTitle className="text-2xl font-semibold text-red-500">Error Fetching Trade Analytics</CardTitle>
+            <CardDescription className="text-sm font-normal">{error || "No data available"}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="font-medium">Request Arguments:</p>
-            <pre className="bg-gray-100 p-2 rounded mt-2 text-sm">
+            <p className="text-sm font-normal">Request Arguments:</p>
+            <pre className="bg-gray-100 p-2 rounded mt-2 text-sm font-normal">
               {JSON.stringify(requestArgs, null, 2)}
             </pre>
           </CardContent>
@@ -300,12 +300,12 @@ export function TradeAnalytics({
   console.log("Mapped Active Data:", activeData);
 
   return (
-    <div className="flex flex-col items-center min-w-[48rem] pt-4 gap-4 pb-0">
+    <div className="flex flex-col items-center min-w-[48rem] pt-6 gap-4 pb-0">
       <Card className="max-w-3xl w-full pb-3">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">
-              <CardTitle className="text-2xl pb-0">Trade Analytics</CardTitle>
+              <CardTitle className="text-2xl font-semibold">Trade Analytics</CardTitle>
             </div>
             <BurgerMenu
               onExportReport={() => console.log("Exporting Report as PDF from TradeAnalytics")}
@@ -320,8 +320,8 @@ export function TradeAnalytics({
               onApplyFilters={handleApplyFilters}
             />
           </div>
-          <CardDescription className="pb-2 pt-0">
-            {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
+          <CardDescription className="pb-1 pt-0 text-sm font-normal text-left">
+            {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${displayedMarket === "PH" ? getCurrency() : "USD"}.`}
           </CardDescription>
           <Tabs
             key={`tabs-${refreshKey}`}
@@ -329,13 +329,14 @@ export function TradeAnalytics({
             onValueChange={handleTabChange}
             className="pt-1 pb-0"
           >
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3 text-sm font-semibold">
               <TabsTrigger value="longshort">LONG & SHORT</TabsTrigger>
               <TabsTrigger value="long">LONG</TabsTrigger>
               <TabsTrigger value="short">SHORT</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
+        
         <CardContent className="pb-0 pt-0">
           <div className="grid grid-cols-9">
             <div className="col-span-5">

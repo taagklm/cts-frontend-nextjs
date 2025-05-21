@@ -62,11 +62,11 @@ interface ChartData {
 const chartConfig = {
   frequency: {
     label: "Frequency",
-    color: "hsl(var(--chart-1))", // Default color for negative or neutral ranges
+    color: "#FF5252", // Red for negative ranges, matching StatsTable
   },
   positiveFrequency: {
     label: "Positive Frequency",
-    color: "#4CAF50", // Green for positive ranges
+    color: "#4CAF50", // Green for positive ranges, matching StatsTable
   },
 } satisfies ChartConfig;
 
@@ -83,11 +83,11 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
 
   // Transform profit distribution data for chart
   const chartData: ChartData[] = (data?.profitDistribution ?? []).map((bracket) => {
-    const isPositive = bracket.rangeStart != null && bracket.rangeStart >= 0;
+    const isNegative = bracket.rangeStart != null && bracket.rangeStart < 0;
     return {
       range: formatRange(bracket.rangeStart, bracket.rangeEnd),
       frequency: bracket.count ?? 0,
-      fill: isPositive ? chartConfig.positiveFrequency.color : chartConfig.frequency.color,
+      fill: isNegative ? chartConfig.frequency.color : chartConfig.positiveFrequency.color,
     };
   });
 
