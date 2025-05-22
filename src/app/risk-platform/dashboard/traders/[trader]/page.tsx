@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { startOfYear } from "date-fns";
+import { format } from "date-fns";
 import { mockData as analyticsMockData } from "@/mock-data/trader-trade-analytics";
 import { TraderPageClient } from "@/components/features/trader-page-client";
 
@@ -47,17 +47,23 @@ export default async function Page({
   let error = null;
   try {
     const today = new Date();
+    const currentYear = today.getFullYear();
+    const dateStart = `${currentYear}-01-01`
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);  // 30 seconds timeout
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/trade-analytics`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         market: "Global",
         account: accountNo,
-        dateStart: startOfYear(today).toISOString().split("T")[0],
-        dateEnd: today.toISOString().split("T")[0],
+        dateStart: dateStart,
+        dateEnd: format(today, "yyyy-MM-dd"),
         isHoldingsIncluded: false,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId); // Clear timeout if request completes
 
     if (response.ok) {
       analyticsData = await response.json();

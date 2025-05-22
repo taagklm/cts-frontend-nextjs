@@ -94,14 +94,21 @@ export function TradeAnalytics({
   displayedMarket,
   handleMarketChange,
 }: TradeAnalyticsProps) {
+  const today = new Date();
   const [activeTab, setActiveTab] = useState<"longshort" | "long" | "short">("longshort");
   const [displayedPeriod, setDisplayedPeriod] = useState<string>("yearToDate");
-  const [includeHoldings, setIncludeHoldings] = useState<boolean>(true);
+  const [includeHoldings, setIncludeHoldings] = useState<boolean>(false); // Match page.tsx
   const [analyticsData, setAnalyticsData] = useState<TradeAnalyticsResponse | null>(initialData || null);
   const [error, setError] = useState<string | null>(initialError || null);
   const [requestArgs, setRequestArgs] = useState<object | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(!!initialData || !!initialError);
+  const [filtersApplied, setFiltersApplied] = useState<boolean>(false); // Track if filters were explicitly applied
+
+  // Initialize date range to match page.tsx
+  const initialDateRange: DateRange = {
+    from: new Date("2025-01-01"),
+    to: today,
+  };
 
   const marketNames: { [key: string]: string } = {
     IB: "Global",
@@ -129,16 +136,13 @@ export function TradeAnalytics({
       tags: null,
     };
 
-    console.log("Preparing Trade Analytics with args:", args);
-    setRequestArgs(args);
-
-    const requestDetails = {
+    console.log("Sending request to backend:", {
       url: "/api/trade-analytics",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(args),
-    };
-    console.log("API Request Details:", requestDetails);
+      body: args,
+    });
+    setRequestArgs(args);
 
     try {
       console.log("Sending fetch request to /api/trade-analytics");
@@ -146,7 +150,7 @@ export function TradeAnalytics({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(args),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(30000), // 30 seconds timeout
       });
 
       console.log("Fetch response received:", { status: response.status, ok: response.ok });
@@ -169,15 +173,8 @@ export function TradeAnalytics({
   }, [displayedMarket, displayedDateRange, includeHoldings, accountNo, phAccountNo]);
 
   useEffect(() => {
-    if (!isInitialFetchDone) {
-      console.log("Triggering initial fetchAnalytics");
-      fetchAnalytics();
-      setIsInitialFetchDone(true);
-    }
-  }, [fetchAnalytics, isInitialFetchDone]);
-
-  useEffect(() => {
-    if (isInitialFetchDone) {
+    // Only fetch if filters have been explicitly applied
+    if (filtersApplied) {
       console.log("Filter states changed, triggering fetchAnalytics:", {
         displayedDateRange,
         displayedPeriod,
@@ -186,7 +183,7 @@ export function TradeAnalytics({
       });
       fetchAnalytics();
     }
-  }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, isInitialFetchDone]);
+  }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, filtersApplied]);
 
   const handleApplyFilters = useCallback(
     (newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
@@ -198,6 +195,7 @@ export function TradeAnalytics({
       setDisplayedDateRange(newDateRange);
       setDisplayedPeriod(newPeriod);
       setIncludeHoldings(newIncludeHoldings);
+      setFiltersApplied(true); // Mark filters as applied to trigger fetch
     },
     [setDisplayedDateRange],
   );

@@ -2,7 +2,6 @@
 
 import { EquityCurve } from "@/components/features/equity-curve";
 import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
-import { startOfYear } from "date-fns";
 import { useState, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +24,7 @@ export function TraderPageClient({
 }: TraderPageClientProps) {
   const today = new Date();
   const [displayedDateRange, setDisplayedDateRange] = useState<DateRange | undefined>({
-    from: startOfYear(today),
+    from: new Date("2025-01-01"), // Match page.tsx
     to: today,
   });
   const [displayedMarket, setDisplayedMarket] = useState("IB");
