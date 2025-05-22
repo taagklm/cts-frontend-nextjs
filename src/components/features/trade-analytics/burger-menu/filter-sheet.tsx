@@ -112,15 +112,30 @@ export function Range({
     console.log("Range: handleUnselectAll");
   };
 
+  // Validate date range
+  const isDateRangeComplete = () => {
+    if (!dateRange || !dateRange.from || !dateRange.to) {
+      console.log("Range: Date range incomplete", { dateRange });
+      return false;
+    }
+    if (isNaN(dateRange.from.getTime()) || isNaN(dateRange.to.getTime())) {
+      console.log("Range: Invalid date objects", { dateRange });
+      return false;
+    }
+    return true;
+  };
+
   // Handle "Apply Filters" button click
   const handleApplyFilters = (e: React.MouseEvent) => {
     e.stopPropagation();
     console.log("Range: handleApplyFilters:", { dateRange, period, isDateRangeValid });
     if (!isDateRangeValid) {
       console.log("Range: Apply Filters blocked due to invalid date range");
+      window.alert("Please select a valid date range.");
       return;
     }
-    if (!dateRange || !dateRange.from) {
+    if (!isDateRangeComplete()) {
+      console.log("Range: Apply Filters blocked due to incomplete date range");
       window.alert("Please select a valid date range.");
       return;
     }
@@ -204,7 +219,7 @@ export function Range({
 
       <Button
         onClick={handleApplyFilters}
-        disabled={!isDateRangeValid}
+        disabled={!isDateRangeValid || !isDateRangeComplete()}
         className="mt-4"
       >
         Apply Filters

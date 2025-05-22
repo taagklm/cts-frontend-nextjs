@@ -120,8 +120,13 @@ export function TradeAnalytics({
 
   const fetchAnalytics = useCallback(async () => {
     console.log("fetchAnalytics started", { displayedDateRange, displayedMarket, includeHoldings });
-    if (!displayedDateRange?.from) {
-      console.log("fetchAnalytics aborted: No valid displayedDateRange.from");
+    if (!displayedDateRange?.from || isNaN(displayedDateRange.from.getTime())) {
+      console.log("fetchAnalytics aborted: Invalid displayedDateRange.from", { displayedDateRange });
+      setError("Invalid date range selected");
+      return;
+    }
+    if (!displayedDateRange.to || isNaN(displayedDateRange.to.getTime())) {
+      console.log("fetchAnalytics aborted: Invalid displayedDateRange.to", { displayedDateRange });
       setError("Invalid date range selected");
       return;
     }
@@ -131,7 +136,7 @@ export function TradeAnalytics({
       market: displayedMarket === "IB" ? "Global" : displayedMarket,
       account: accountForMarket,
       dateStart: displayedDateRange.from.toISOString().split("T")[0],
-      dateEnd: displayedDateRange.to?.toISOString().split("T")[0] ?? displayedDateRange.from.toISOString().split("T")[0],
+      dateEnd: displayedDateRange.to.toISOString().split("T")[0],
       isHoldingsIncluded: includeHoldings,
       tags: null,
     };
@@ -185,19 +190,34 @@ export function TradeAnalytics({
     }
   }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, filtersApplied]);
 
+  // Debounce filter application to prevent rapid state updates
+  const debounce = <F extends (...args: any[]) => void>(func: F, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<F>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
+
   const handleApplyFilters = useCallback(
-    (newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
+    debounce((newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
       console.log("handleApplyFilters triggered in trade-analytics.tsx", {
         newDateRange,
         newPeriod,
         newIncludeHoldings,
       });
+      if (!newDateRange || !newDateRange.from || !newDateRange.to || isNaN(newDateRange.from.getTime()) || isNaN(newDateRange.to.getTime())) {
+        console.log("handleApplyFilters: Invalid date range", { newDateRange });
+        setError("Invalid date range selected");
+        return;
+      }
+      console.log("handleApplyFilters: Applying filters", { newDateRange, newPeriod, newIncludeHoldings });
       setDisplayedDateRange(newDateRange);
       setDisplayedPeriod(newPeriod);
       setIncludeHoldings(newIncludeHoldings);
       setFiltersApplied(true); // Mark filters as applied to trigger fetch
-    },
-    [setDisplayedDateRange],
+    }, 300),
+    [setDisplayedDateRange, setError]
   );
 
   const handleTabChange = useCallback((val: string) => {
@@ -292,8 +312,8 @@ export function TradeAnalytics({
     activeTab === "longshort"
       ? mapAnalyticsData(analyticsData.longAndShort)
       : activeTab === "long"
-      ? mapAnalyticsData(analyticsData.long)
-      : mapAnalyticsData(analyticsData.short);
+        ? mapAnalyticsData(analyticsData.long)
+        : mapAnalyticsData(analyticsData.short);
 
   console.log("Mapped Active Data:", activeData);
 
@@ -334,7 +354,7 @@ export function TradeAnalytics({
             </TabsList>
           </Tabs>
         </CardHeader>
-        
+
         <CardContent className="pb-0 pt-0">
           <div className="grid grid-cols-9">
             <div className="col-span-5">
