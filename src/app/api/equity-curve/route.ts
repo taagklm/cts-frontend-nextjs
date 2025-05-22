@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mockDailyPnl } from "@/mock-data/daily-pnl";
+import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
 import { useMock } from "@/app/api/config";
 
 export async function POST(request: Request) {
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const accountData = mockDailyPnl.find((data) => data.account === account);
+      const accountData = mockIbkrDailyPnl.find((data) => data.account === account);
       if (!accountData) {
         console.error("No data found for account:", account);
         return NextResponse.json(
