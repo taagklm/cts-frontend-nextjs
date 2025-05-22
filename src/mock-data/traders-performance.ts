@@ -3,18 +3,18 @@
 export const mockData = {
   Traders: [
     {
-      trader: "Prop Trading Fund",
+      trader: "Chad",
       ibPnlYTD: 2061075,
       ibPnlYTDPercent: 0.4122,
-      phPnlYTD: 123664500, // Assuming 1 USD = 60 PHP
+      phPnlYTD: 123664500,
       phPnlYTDPercent: 0.4122,
       ibAum: 5000000,
-      phAum: 300000000, // Assuming 1 USD = 60 PHP
+      phAum: 300000000,
       ibAccountNo: "U1673041",
       phAccountNo: "PHU1673041",
     },
     {
-      trader: "OTP Fund",
+      trader: "Jec",
       ibPnlYTD: 224590,
       ibPnlYTDPercent: 0.0449,
       phPnlYTD: 13475400,
@@ -25,7 +25,7 @@ export const mockData = {
       phAccountNo: "PHU1673066",
     },
     {
-      trader: "Daniel Go",
+      trader: "Dan",
       ibPnlYTD: 245933,
       ibPnlYTDPercent: 0.0492,
       phPnlYTD: 14755980,
@@ -36,7 +36,7 @@ export const mockData = {
       phAccountNo: "PHU2389399",
     },
     {
-      trader: "Miguel Delfin",
+      trader: "Mike",
       ibPnlYTD: -2586.99,
       ibPnlYTDPercent: -0.0005,
       phPnlYTD: -155219.4,
@@ -47,7 +47,7 @@ export const mockData = {
       phAccountNo: "PHU2536164",
     },
     {
-      trader: "Aedrick Yanga",
+      trader: "Aedrick",
       ibPnlYTD: -1939.6,
       ibPnlYTDPercent: -0.0004,
       phPnlYTD: -116376,
@@ -58,7 +58,7 @@ export const mockData = {
       phAccountNo: "PHU2800523",
     },
     {
-      trader: "Jan Villafranca",
+      trader: "Jan",
       ibPnlYTD: -1718.44,
       ibPnlYTDPercent: -0.0003,
       phPnlYTD: -103106.4,
@@ -69,7 +69,7 @@ export const mockData = {
       phAccountNo: "PHU10486433",
     },
     {
-      trader: "Homer Inoferio",
+      trader: "Homer",
       ibPnlYTD: -2106.76,
       ibPnlYTDPercent: -0.0004,
       phPnlYTD: -126405.6,
