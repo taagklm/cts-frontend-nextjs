@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
-import { useMock } from "@/app/api/config";
+
+const useMock = false;    // Toggle true to use mock data
 
 export async function POST(request: Request) {
   console.log("Received request to /api/dailypnl");
