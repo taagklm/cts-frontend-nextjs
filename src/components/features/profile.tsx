@@ -86,7 +86,7 @@ export default function ProfileClient() {
   if (!mounted) return null;
 
   return (
-    <div className="flex justify-center min-h-screen px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-scrollbar">
+    <div className="flex justify-center min-h-screen px-4 sm:px-6 lg:px-8 py-4 space-y-4 no-scrollbar">
       <Toaster richColors position="top-center" />
       <div className="w-full max-w-2xl">
         <div className="grid grid-rows-2 gap-0">
@@ -119,47 +119,49 @@ export default function ProfileClient() {
           </div>
         </div>
 
-        <Tabs defaultValue="profile" className="mt-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="display">Display</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+        <Tabs defaultValue="profile" className="mt-6 w-full isolate">
+          <TabsList className="grid w-full sm:w-[512px] grid-cols-3 mx-auto">
+            <TabsTrigger value="profile" className="w-full">Profile</TabsTrigger>
+            <TabsTrigger value="display" className="w-full">Display</TabsTrigger>
+            <TabsTrigger value="activity" className="w-full">Activity</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>Update your profile information here.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label>First Name</Label>
-                    <Input defaultValue={user.firstName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Last Name</Label>
-                    <Input defaultValue={user.lastName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2 space-y-1">
-                    <Label>Email</Label>
-                    <Input defaultValue={user.email} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default" />
-                  </div>
-                  <div className="col-span-1 space-y-1">
-                    <Label>Employee No.</Label>
-                    <Input defaultValue={user.employeeNumber} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default" />
-                  </div>
+          <Card className="w-full sm:w-[512px] mx-auto">
+            <CardHeader>
+              <CardTitle>Profile</CardTitle>
+              <CardDescription>Update your profile information here.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>First Name</Label>
+                  <Input defaultValue={user.firstName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
                 </div>
                 <div className="space-y-1">
-                  <Label>Username</Label>
-                  <Input
-                    value={user.username}
-                    onChange={(e) => setUser((prev) => ({ ...prev, username: e.target.value }))}
-                  />
+                  <Label>Last Name</Label>
+                  <Input defaultValue={user.lastName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
                 </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2 space-y-1">
+                  <Label>Email</Label>
+                  <Input defaultValue={user.email} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+                </div>
+                <div className="col-span-1 space-y-1">
+                  <Label>Employee No.</Label>
+                  <Input defaultValue={user.employeeNumber} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Username</Label>
+                <Input
+                  value={user.username}
+                  onChange={(e) => setUser((prev) => ({ ...prev, username: e.target.value }))}
+                  className="truncate"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Password</Label>
                   <Input
@@ -167,6 +169,7 @@ export default function ProfileClient() {
                     placeholder="Enter new password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="truncate"
                   />
                 </div>
                 <div className="space-y-1">
@@ -176,19 +179,21 @@ export default function ProfileClient() {
                     placeholder="Confirm new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="truncate"
                   />
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-              </CardFooter>
-            </Card>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </CardFooter>
+          </Card>
           </TabsContent>
 
           <TabsContent value="display">
-            <Card>
+            <Card className="w-full sm:w-[512px] mx-auto">
               <CardHeader>
                 <CardTitle>Display</CardTitle>
                 <CardDescription>Adjust your display settings here.</CardDescription>
@@ -216,9 +221,9 @@ export default function ProfileClient() {
               </CardFooter>
             </Card>
           </TabsContent>
-
+          
           <TabsContent value="activity">
-            <Card>
+            <Card className="w-full sm:w-[512px] mx-auto">
               <CardHeader>
                 <CardTitle>Activity</CardTitle>
                 <CardDescription>View your recent login activity.</CardDescription>
@@ -229,7 +234,7 @@ export default function ProfileClient() {
                   <Input
                     defaultValue="March 10, 2025, 3:45 PM"
                     readOnly
-                    className="bg-gray-100 text-gray-500 border-none cursor-default"
+                    className="bg-gray-100 text-gray-500 border-none cursor-default truncate"
                   />
                 </div>
                 <div className="space-y-1">
@@ -237,7 +242,7 @@ export default function ProfileClient() {
                   <Input
                     defaultValue="MacBook Pro - Safari"
                     readOnly
-                    className="bg-gray-100 text-gray-500 border-none cursor-default"
+                    className="bg-gray-100 text-gray-500 border-none cursor-default truncate"
                   />
                 </div>
               </CardContent>
