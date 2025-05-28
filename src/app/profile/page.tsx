@@ -6,17 +6,13 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 
 
-export default function ProfilePage() {
+export default function Page() {
   return (
-    // <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <SidebarProvider>
-        <div style={{ display: "flex" }}>
-          <AppSidebar />
-          <main style={{ flex: 1 }}>
-            <ProfileClient/>
-          </main>
-        </div>
-      </SidebarProvider>
-    // </ThemeProvider>
+    <SidebarProvider>
+      <AppSidebar />
+      <div>
+        <ProfileClient />
+      </div>
+    </SidebarProvider>
   );
 }

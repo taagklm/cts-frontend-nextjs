@@ -41,21 +41,9 @@ export default async function Page() {
   }
 
   return (
-    <div className="w-full max-w-[1280px] mx-auto p-4 sm:p-6">
-      {/* <div className="mb-4">
-        <TradeAnalytics
-          data={analyticsMockData}
-          dateRange={{ from: startOfYear(new Date()), to: new Date() }}
-        />
-      </div> */}
+    <div className="w-full max-w-[1280px] mx-auto sm:p-6">
       <Card className="border-none shadow-none">
-        {/* <CardHeader className="py-2">
-          <CardTitle className="text-lg">Tradeblocks</CardTitle>
-          <CardDescription className="text-sm">
-            Trading activity for account U1673066 (Jan 1 - Feb 1, 2024)
-          </CardDescription>
-        </CardHeader> */}
-        <div className="px-4 py-4">
+        <div className="px-12 pt-0">
           <TradeblocksTable initialData={tradeblocksData} initialError={error} />
         </div>
       </Card>

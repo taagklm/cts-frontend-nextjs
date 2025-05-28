@@ -27,7 +27,7 @@ export default async function Page() {
   }
 
   return (
-    <div className="px-12">
+    <div>
       <TradersPerformanceTable data={tradersData} />
     </div>
   );
