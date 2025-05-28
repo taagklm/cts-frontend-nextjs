@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockTradeblocks } from "@/mock-data/tradeblocks";
-import { useMock } from "@/app/api/config";
+
+const useMock = false;    // Toggle true to use mock data
 
 // Handle POST requests to fetch tradeblocks
 export async function POST(request: Request) {

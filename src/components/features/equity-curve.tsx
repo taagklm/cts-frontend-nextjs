@@ -6,7 +6,7 @@ import { Card, CardHeader, CardDescription, CardContent } from "../ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { mockDailyPnl } from "@/mock-data/daily-pnl";
+import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
 
 interface DailyPnlEntry {
   date: string;
@@ -69,7 +69,7 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
   const selectedAccount = market === "PH" && phAccountNo ? phAccountNo : accountNo;
 
   // Filter mockDailyPnl by selected account
-  const accountData = mockDailyPnl.find((data) => data.account === selectedAccount) || {
+  const accountData = mockIbkrDailyPnl.find((data) => data.account === selectedAccount) || {
     account: selectedAccount,
     currency: getCurrency(),
     dailyPnl: [],

@@ -94,14 +94,21 @@ export function TradeAnalytics({
   displayedMarket,
   handleMarketChange,
 }: TradeAnalyticsProps) {
+  const today = new Date();
   const [activeTab, setActiveTab] = useState<"longshort" | "long" | "short">("longshort");
   const [displayedPeriod, setDisplayedPeriod] = useState<string>("yearToDate");
-  const [includeHoldings, setIncludeHoldings] = useState<boolean>(true);
+  const [includeHoldings, setIncludeHoldings] = useState<boolean>(false); // Match page.tsx
   const [analyticsData, setAnalyticsData] = useState<TradeAnalyticsResponse | null>(initialData || null);
   const [error, setError] = useState<string | null>(initialError || null);
   const [requestArgs, setRequestArgs] = useState<object | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(!!initialData || !!initialError);
+  const [filtersApplied, setFiltersApplied] = useState<boolean>(false); // Track if filters were explicitly applied
+
+  // Initialize date range to match page.tsx
+  const initialDateRange: DateRange = {
+    from: new Date("2025-01-01"),
+    to: today,
+  };
 
   const marketNames: { [key: string]: string } = {
     IB: "Global",
@@ -113,8 +120,13 @@ export function TradeAnalytics({
 
   const fetchAnalytics = useCallback(async () => {
     console.log("fetchAnalytics started", { displayedDateRange, displayedMarket, includeHoldings });
-    if (!displayedDateRange?.from) {
-      console.log("fetchAnalytics aborted: No valid displayedDateRange.from");
+    if (!displayedDateRange?.from || isNaN(displayedDateRange.from.getTime())) {
+      console.log("fetchAnalytics aborted: Invalid displayedDateRange.from", { displayedDateRange });
+      setError("Invalid date range selected");
+      return;
+    }
+    if (!displayedDateRange.to || isNaN(displayedDateRange.to.getTime())) {
+      console.log("fetchAnalytics aborted: Invalid displayedDateRange.to", { displayedDateRange });
       setError("Invalid date range selected");
       return;
     }
@@ -124,21 +136,18 @@ export function TradeAnalytics({
       market: displayedMarket === "IB" ? "Global" : displayedMarket,
       account: accountForMarket,
       dateStart: displayedDateRange.from.toISOString().split("T")[0],
-      dateEnd: displayedDateRange.to?.toISOString().split("T")[0] ?? displayedDateRange.from.toISOString().split("T")[0],
+      dateEnd: displayedDateRange.to.toISOString().split("T")[0],
       isHoldingsIncluded: includeHoldings,
       tags: null,
     };
 
-    console.log("Preparing Trade Analytics with args:", args);
-    setRequestArgs(args);
-
-    const requestDetails = {
+    console.log("Sending request to backend:", {
       url: "/api/trade-analytics",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(args),
-    };
-    console.log("API Request Details:", requestDetails);
+      body: args,
+    });
+    setRequestArgs(args);
 
     try {
       console.log("Sending fetch request to /api/trade-analytics");
@@ -146,7 +155,7 @@ export function TradeAnalytics({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(args),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(30000), // 30 seconds timeout
       });
 
       console.log("Fetch response received:", { status: response.status, ok: response.ok });
@@ -169,15 +178,8 @@ export function TradeAnalytics({
   }, [displayedMarket, displayedDateRange, includeHoldings, accountNo, phAccountNo]);
 
   useEffect(() => {
-    if (!isInitialFetchDone) {
-      console.log("Triggering initial fetchAnalytics");
-      fetchAnalytics();
-      setIsInitialFetchDone(true);
-    }
-  }, [fetchAnalytics, isInitialFetchDone]);
-
-  useEffect(() => {
-    if (isInitialFetchDone) {
+    // Only fetch if filters have been explicitly applied
+    if (filtersApplied) {
       console.log("Filter states changed, triggering fetchAnalytics:", {
         displayedDateRange,
         displayedPeriod,
@@ -186,20 +188,36 @@ export function TradeAnalytics({
       });
       fetchAnalytics();
     }
-  }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, isInitialFetchDone]);
+  }, [displayedDateRange, displayedPeriod, includeHoldings, displayedMarket, fetchAnalytics, filtersApplied]);
+
+  // Debounce filter application to prevent rapid state updates
+  const debounce = <F extends (...args: any[]) => void>(func: F, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<F>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
 
   const handleApplyFilters = useCallback(
-    (newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
+    debounce((newDateRange: DateRange | undefined, newPeriod: string, newIncludeHoldings: boolean) => {
       console.log("handleApplyFilters triggered in trade-analytics.tsx", {
         newDateRange,
         newPeriod,
         newIncludeHoldings,
       });
+      if (!newDateRange || !newDateRange.from || !newDateRange.to || isNaN(newDateRange.from.getTime()) || isNaN(newDateRange.to.getTime())) {
+        console.log("handleApplyFilters: Invalid date range", { newDateRange });
+        setError("Invalid date range selected");
+        return;
+      }
+      console.log("handleApplyFilters: Applying filters", { newDateRange, newPeriod, newIncludeHoldings });
       setDisplayedDateRange(newDateRange);
       setDisplayedPeriod(newPeriod);
       setIncludeHoldings(newIncludeHoldings);
-    },
-    [setDisplayedDateRange],
+      setFiltersApplied(true); // Mark filters as applied to trigger fetch
+    }, 300),
+    [setDisplayedDateRange, setError]
   );
 
   const handleTabChange = useCallback((val: string) => {
@@ -294,8 +312,8 @@ export function TradeAnalytics({
     activeTab === "longshort"
       ? mapAnalyticsData(analyticsData.longAndShort)
       : activeTab === "long"
-      ? mapAnalyticsData(analyticsData.long)
-      : mapAnalyticsData(analyticsData.short);
+        ? mapAnalyticsData(analyticsData.long)
+        : mapAnalyticsData(analyticsData.short);
 
   console.log("Mapped Active Data:", activeData);
 
@@ -336,7 +354,7 @@ export function TradeAnalytics({
             </TabsList>
           </Tabs>
         </CardHeader>
-        
+
         <CardContent className="pb-0 pt-0">
           <div className="grid grid-cols-9">
             <div className="col-span-5">

@@ -5,10 +5,9 @@
 //  DateStart: 2025-01-01;
 //  DateEnd: 2025-01-25;
 
-export const mockDailyPnl = [
+export const mockIbkrDailyPnl = [
   {
-    account: "U1673041", // Prop Trading Fund
-    currency: "USD",
+    account: "U1673041",
     dailyPnl: [
       { date: "2025-01-01", totalPnl: 1500.75, realizedPnl: 1200.50, unrealizedPnl: 300.25 },
       { date: "2025-01-02", totalPnl: -500.20, realizedPnl: -600.30, unrealizedPnl: 100.10 },
@@ -38,8 +37,7 @@ export const mockDailyPnl = [
     ],
   },
   {
-    account: "U1673066", // OTP Fund
-    currency: "USD",
+    account: "U1673066",
     dailyPnl: [
       { date: "2025-01-01", totalPnl: 200.50, realizedPnl: 150.50, unrealizedPnl: 50.00 },
       { date: "2025-01-02", totalPnl: -100.10, realizedPnl: -120.10, unrealizedPnl: 20.00 },
@@ -69,8 +67,7 @@ export const mockDailyPnl = [
     ],
   },
   {
-    account: "U2389399", // Daniel Go
-    currency: "USD",
+    account: "U2389399",
     dailyPnl: [
       { date: "2025-01-01", totalPnl: 300.75, realizedPnl: 250.50, unrealizedPnl: 50.25 },
       { date: "2025-01-02", totalPnl: -150.20, realizedPnl: -170.30, unrealizedPnl: 20.10 },

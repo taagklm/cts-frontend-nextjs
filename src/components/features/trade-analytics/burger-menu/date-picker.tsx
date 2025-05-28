@@ -81,32 +81,6 @@ export function DatePickerWithRange({
     (_, i) => i + 1
   );
 
-  // Initialize date range
-  React.useEffect(() => {
-    if (!dateRange || !dateRange.from) {
-      setDateRange(undefined);
-      setSelectedYear(null);
-      setFromYear(null);
-      setToYear(null);
-      setSelectedMonth(null);
-      setFromMonth(null);
-      setToMonth(null);
-      setFromDay(null);
-      setToDay(null);
-      setHasSelectedYear(false);
-      setHasSelectedMonth(false);
-      setHasSelectedDay(false);
-      setHasSelectedFromYear(false);
-      setHasSelectedFromMonth(false);
-      setHasSelectedFromDay(false);
-      setHasSelectedToYear(false);
-      setHasSelectedToMonth(false);
-      setHasSelectedToDay(false);
-      setLocalError(null);
-      console.log("DatePickerWithRange: Initialized with placeholders");
-    }
-  }, [dateRange, setDateRange]);
-
   // Log date range changes for debugging
   React.useEffect(() => {
     if (dateRange && dateRange.from) {
@@ -115,6 +89,8 @@ export function DatePickerWithRange({
         to: dateRange.to?.toISOString() || "N/A",
         period,
       });
+    } else {
+      console.log("DatePickerWithRange: Date Range Invalid or Undefined:", { dateRange, period });
     }
   }, [dateRange, period]);
 
@@ -283,7 +259,7 @@ export function DatePickerWithRange({
     });
   };
 
-  // Handle custom range selection with validation
+  // Handle custom range selection with stricter validation
   const handleCustomSelect = (
     fromYearVal: number,
     fromMonthVal: number,
@@ -292,48 +268,54 @@ export function DatePickerWithRange({
     toMonthVal: number,
     toDayVal: number
   ) => {
-    const finalFromYear = fromYearVal ?? (hasSelectedFromYear ? fromYear : currentYear);
-    const finalFromMonth = fromMonthVal ?? (hasSelectedFromMonth ? fromMonth : currentMonth);
-    const finalFromDay = fromDayVal ?? (hasSelectedFromDay ? fromDay : currentDay);
-    const finalToYear = toYearVal ?? (hasSelectedToYear ? toYear : currentYear);
-    const finalToMonth = toMonthVal ?? (hasSelectedToMonth ? toMonth : currentMonth);
-    const finalToDay = toDayVal ?? (hasSelectedToDay ? toDay : currentDay);
-
+    // Ensure all values are provided and valid
     if (
-      isNaN(finalFromYear) ||
-      isNaN(finalFromMonth) ||
-      isNaN(finalFromDay) ||
-      isNaN(finalToYear) ||
-      isNaN(finalToMonth) ||
-      isNaN(finalToDay)
+      isNaN(fromYearVal) ||
+      isNaN(fromMonthVal) ||
+      isNaN(fromDayVal) ||
+      isNaN(toYearVal) ||
+      isNaN(toMonthVal) ||
+      isNaN(toDayVal)
     ) {
-      setLocalError("Invalid date selected");
-      setParentError?.("Invalid date selected");
+      setLocalError("All date fields must be selected");
+      setParentError?.("All date fields must be selected");
+      console.log("handleCustomSelect: Invalid inputs", {
+        fromYearVal,
+        fromMonthVal,
+        fromDayVal,
+        toYearVal,
+        toMonthVal,
+        toDayVal,
+      });
       return;
     }
 
+    // Validate against future dates
     if (
-      finalFromYear > currentYear ||
-      (finalFromYear === currentYear && finalFromMonth > currentMonth) ||
-      (finalFromYear === currentYear && finalFromMonth === currentMonth && finalFromDay > currentDay)
+      fromYearVal > currentYear ||
+      (fromYearVal === currentYear && fromMonthVal > currentMonth) ||
+      (fromYearVal === currentYear && fromMonthVal === currentMonth && fromDayVal > currentDay)
     ) {
       setLocalError("Start date cannot be in the future");
       setParentError?.("Start date cannot be in the future");
+      console.log("handleCustomSelect: Start date in future", { fromYearVal, fromMonthVal, fromDayVal });
       return;
     }
 
     if (
-      finalToYear > currentYear ||
-      (finalToYear === currentYear && finalToMonth > currentMonth) ||
-      (finalToYear === currentYear && finalToMonth === currentMonth && finalToDay > currentDay)
+      toYearVal > currentYear ||
+      (toYearVal === currentYear && toMonthVal > currentMonth) ||
+      (toYearVal === currentYear && toMonthVal === currentMonth && toDayVal > currentDay)
     ) {
       setLocalError("End date cannot be in the future");
       setParentError?.("End date cannot be in the future");
+      console.log("handleCustomSelect: End date in future", { toYearVal, toMonthVal, toDayVal });
       return;
     }
 
-    const fromDate = normalizeDateToUTC(new Date(finalFromYear, finalFromMonth, finalFromDay));
-    const toDate = normalizeDateToUTC(new Date(finalToYear, finalToMonth, finalToDay));
+    // Validate date ranges
+    const fromDate = normalizeDateToUTC(new Date(fromYearVal, fromMonthVal, fromDayVal));
+    const toDate = normalizeDateToUTC(new Date(toYearVal, toMonthVal, toDayVal));
 
     if (isAfter(fromDate, toDate)) {
       setLocalError("End date cannot be earlier than start date");
@@ -342,24 +324,31 @@ export function DatePickerWithRange({
       return;
     }
 
+    // Update state only if all validations pass
     setLocalError(null);
     setParentError?.(null);
     setDateRange({ from: fromDate, to: toDate });
-    setFromYear(finalFromYear);
-    setFromMonth(finalFromMonth);
-    setFromDay(finalFromDay);
-    setToYear(finalToYear);
-    setToMonth(finalToMonth);
-    setToDay(finalToDay);
-    console.log("handleCustomSelect:", {
+    setFromYear(fromYearVal);
+    setFromMonth(fromMonthVal);
+    setFromDay(fromDayVal);
+    setToYear(toYearVal);
+    setToMonth(toMonthVal);
+    setToDay(toDayVal);
+    setHasSelectedFromYear(true);
+    setHasSelectedFromMonth(true);
+    setHasSelectedFromDay(true);
+    setHasSelectedToYear(true);
+    setHasSelectedToMonth(true);
+    setHasSelectedToDay(true);
+    console.log("handleCustomSelect: Success", {
       fromDate,
       toDate,
-      fromYear: finalFromYear,
-      fromMonth: finalFromMonth,
-      fromDay: finalFromDay,
-      toYear: finalToYear,
-      toMonth: finalToMonth,
-      toDay: finalToDay,
+      fromYear: fromYearVal,
+      fromMonth: fromMonthVal,
+      fromDay: fromDayVal,
+      toYear: toYearVal,
+      toMonth: toMonthVal,
+      toDay: toDayVal,
     });
   };
 
