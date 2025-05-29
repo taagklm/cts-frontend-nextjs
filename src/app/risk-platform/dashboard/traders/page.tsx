@@ -1,4 +1,5 @@
 import { TradersPerformanceTable } from "@/components/features/traders-performance-table";
+import { Card } from "@/components/ui/card";
 
 // Define metadata for Traders Performance page
 export const metadata = {
@@ -27,8 +28,12 @@ export default async function Page() {
   }
 
   return (
-    <div>
-      <TradersPerformanceTable data={tradersData} />
+    <div className="w-full max-w-[1280px] mx-auto sm:p-6">
+      <Card className="border-none shadow-none">
+        <div className="px-12 pt-0">
+          <TradersPerformanceTable data={tradersData} />
+        </div>
+      </Card>
     </div>
   );
 }
