@@ -17,11 +17,9 @@ type BurgerMenuProps = {
   onExportTransactions?: () => void;
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
-  period: string;
-  setPeriod: (period: string) => void;
   includeHoldings: boolean;
   setIncludeHoldings: (value: boolean) => void;
-  onApplyFilters: (dateRange: DateRange | undefined, period: string, includeHoldings: boolean) => void;
+  onApplyFilters: (dateRange: DateRange | undefined, includeHoldings: boolean) => void;
 };
 
 export function BurgerMenu({
@@ -30,8 +28,6 @@ export function BurgerMenu({
   onExportTransactions = () => console.log("Exporting Transactions as CSV"),
   dateRange,
   setDateRange,
-  period,
-  setPeriod,
   includeHoldings,
   setIncludeHoldings,
   onApplyFilters,
@@ -50,10 +46,10 @@ export function BurgerMenu({
   }, []);
 
   const handleApplyFilters = useCallback(() => {
-    console.log("Applying filters and closing modal", { dateRange, period, includeHoldings });
+    console.log("Applying filters and closing modal", { dateRange, includeHoldings });
     setIsSheetOpen(false);
-    onApplyFilters(dateRange, period, includeHoldings);
-  }, [dateRange, period, includeHoldings, onApplyFilters]);
+    onApplyFilters(dateRange, includeHoldings);
+  }, [dateRange, includeHoldings, onApplyFilters]);
 
   useEffect(() => {
     if (isSheetOpen || isDropdownOpen) {
@@ -276,14 +272,12 @@ export function BurgerMenu({
             </button>
             <div className="custom-modal-header text-left">
               <h2>Filters</h2>
-              <p>Select period and date range to filter the data.</p>
+              <p>Select a date range to filter the data.</p>
             </div>
             <div className="flex flex-col gap-4 py-4">
               <Range
                 dateRange={dateRange}
                 setDateRange={setDateRange}
-                period={period}
-                setPeriod={setPeriod}
                 includeHoldings={includeHoldings}
                 setIncludeHoldings={setIncludeHoldings}
                 onApplyFilters={handleApplyFilters}

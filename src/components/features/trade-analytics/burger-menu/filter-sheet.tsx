@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { startOfYear, startOfMonth } from "date-fns";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DatePickerWithRange } from "./date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRange } from "react-day-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { DateRange } from "react-day-picker";
+import { isAfter } from "date-fns";
 
 function normalizeDateToUTC(date: Date): Date {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -17,22 +16,22 @@ function normalizeDateToUTC(date: Date): Date {
 export function Range({
   dateRange,
   setDateRange,
-  period,
-  setPeriod,
   includeHoldings,
   setIncludeHoldings,
   onApplyFilters,
 }: {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
-  period: string;
-  setPeriod: (period: string) => void;
   includeHoldings: boolean;
   setIncludeHoldings: (value: boolean) => void;
   onApplyFilters: () => void;
 }) {
+  const [fromDate, setFromDate] = React.useState<Date | undefined>(dateRange?.from);
+  const [toDate, setToDate] = React.useState<Date | undefined>(dateRange?.to);
   const [selectedStrategies, setSelectedStrategies] = React.useState<string[]>([]);
-  const [isDateRangeValid, setIsDateRangeValid] = React.useState(true);
+  const [isFromValid, setIsFromValid] = React.useState(true);
+  const [isToValid, setIsToValid] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const today = normalizeDateToUTC(new Date());
 
   // List of trading strategies (non-functional, for display only)
@@ -54,38 +53,27 @@ export function Range({
     "Reversal",
   ].sort((a, b) => a.localeCompare(b));
 
-  // Initialize dateRange to undefined to trigger placeholders
+  // Sync dateRange with fromDate and toDate
   React.useEffect(() => {
-    if (!dateRange) {
+    if (fromDate && toDate && !isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
+      if (isAfter(fromDate, toDate)) {
+        setError("End date cannot be earlier than start date");
+        setIsToValid(false);
+        console.log("Range: Invalid range (To before From)", { fromDate, toDate });
+        return;
+      }
+      setError(null);
+      const newDateRange: DateRange = { from: fromDate, to: toDate };
+      setDateRange(newDateRange);
+      console.log("Range: Date range updated", {
+        from: newDateRange.from?.toISOString(),
+        to: newDateRange.to?.toISOString(),
+      });
+    } else {
       setDateRange(undefined);
-      console.log("Range: Initialized dateRange with placeholders");
+      console.log("Range: Date range set to undefined", { fromDate, toDate });
     }
-  }, [dateRange, setDateRange]);
-
-  // Update date range based on selected period
-  React.useEffect(() => {
-    const todayUTC = normalizeDateToUTC(today);
-    switch (period) {
-      case "daily":
-      case "custom":
-        setDateRange(undefined); // Use placeholders until user selects
-        break;
-      case "monthly":
-      case "monthToDate":
-        setDateRange({ from: normalizeDateToUTC(startOfMonth(today)), to: todayUTC });
-        break;
-      case "annual":
-      case "yearToDate":
-        setDateRange({ from: normalizeDateToUTC(startOfYear(today)), to: todayUTC });
-        break;
-    }
-    console.log("Range: Period changed:", { period, dateRange });
-  }, [period, setDateRange]);
-
-  const handlePeriodChange = (value: string) => {
-    setPeriod(value);
-    console.log("Range: handlePeriodChange:", { value });
-  };
+  }, [fromDate, toDate, setDateRange]);
 
   // Non-functional strategy handlers (for UI only)
   const handleStrategyChange = (strategy: string) => {
@@ -114,57 +102,65 @@ export function Range({
 
   // Validate date range
   const isDateRangeComplete = () => {
-    if (!dateRange || !dateRange.from || !dateRange.to) {
-      console.log("Range: Date range incomplete", { dateRange });
+    if (!fromDate || !toDate) {
+      console.log("Range: Date range incomplete", { fromDate, toDate });
       return false;
     }
-    if (isNaN(dateRange.from.getTime()) || isNaN(dateRange.to.getTime())) {
-      console.log("Range: Invalid date objects", { dateRange });
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      console.log("Range: Invalid date objects", { fromDate, toDate });
+      return false;
+    }
+    if (isAfter(fromDate, toDate)) {
+      console.log("Range: Invalid range (To before From)", { fromDate, toDate });
       return false;
     }
     return true;
   };
 
   // Handle "Apply Filters" button click
-  const handleApplyFilters = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log("Range: handleApplyFilters:", { dateRange, period, isDateRangeValid });
-    if (!isDateRangeValid) {
-      console.log("Range: Apply Filters blocked due to invalid date range");
-      window.alert("Please select a valid date range.");
-      return;
-    }
-    if (!isDateRangeComplete()) {
-      console.log("Range: Apply Filters blocked due to incomplete date range");
-      window.alert("Please select a valid date range.");
-      return;
-    }
-    onApplyFilters();
-  };
+  const handleApplyFiltersClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      console.log("Range: handleApplyFilters:", { fromDate, toDate, isFromValid, isToValid });
+      if (!isFromValid || !isToValid) {
+        console.log("Range: Apply Filters blocked due to invalid date");
+        window.alert("Please select valid dates.");
+        return;
+      }
+      if (!isDateRangeComplete()) {
+        console.log("Range: Apply Filters blocked due to incomplete date range");
+        window.alert("Please select a valid date range.");
+        return;
+      }
+      onApplyFilters();
+    },
+    [fromDate, toDate, isFromValid, isToValid, onApplyFilters]
+  );
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex gap-4 items-center">
-        <Select value={period} onValueChange={handlePeriodChange}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Period" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="daily">Daily</SelectItem>
-            <SelectItem value="monthly">Monthly</SelectItem>
-            <SelectItem value="annual">Annual</SelectItem>
-            <SelectItem value="monthToDate">Month to Date</SelectItem>
-            <SelectItem value="yearToDate">Year to Date</SelectItem>
-            <SelectItem value="custom">Custom Range</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <DatePickerWithRange
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          period={period}
-          setIsValid={setIsDateRangeValid}
-        />
+      <div className="flex flex-col gap-4">
+        <div>
+          <Label className="text-gray-900 dark:text-gray-100">From</Label>
+          <DatePickerWithRange
+            date={fromDate}
+            setDate={setFromDate}
+            mode="from"
+            setError={setError}
+            setIsValid={setIsFromValid}
+          />
+        </div>
+        <div>
+          <Label className="text-gray-900 dark:text-gray-100">To</Label>
+          <DatePickerWithRange
+            date={toDate}
+            setDate={setToDate}
+            mode="to"
+            setError={setError}
+            setIsValid={setIsToValid}
+          />
+        </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
 
       <div className="flex items-center gap-2">
@@ -218,8 +214,8 @@ export function Range({
       </Card>
 
       <Button
-        onClick={handleApplyFilters}
-        disabled={!isDateRangeValid || !isDateRangeComplete()}
+        onClick={handleApplyFiltersClick}
+        disabled={!isFromValid || !isToValid || !isDateRangeComplete()}
         className="mt-4"
       >
         Apply Filters
