@@ -26,45 +26,57 @@ export function WinnersTable({
   );
 
   return (
-    <div className="flex items-center justify-center pb-0 ">
-      <Card className="max-w-3xl w-full overflow-visible shadow-none pt-0 pb-1">
-        <CardContent className="pr-2 pl-2 pt-0 pb-0">
-          <Table>
-            <TableBody>
-              <TableRow className="text-sm font-semibold">
-                <TableCell colSpan={3} className="text-center py-3 border-b">
-                  Top 5 Winners
-                </TableCell>
-              </TableRow>
-              {rows.map((item, index) => (
-                <TableRow key={index} className="text-sm font-normal">
-                  <TableCell className="text-left py-2">
-                    {item
-                      ? new Date(item.dateEntered).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "2-digit",
-                          year: "numeric",
-                        })
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell className="font-semibold text-left py-2">
-                    {item ? item.symbol : ""}
-                  </TableCell>
+    <div className="flex items-center justify-center font-sans text-sm font-normal pb-0">
+      {/* Retained font-sans text-sm font-normal from previous updates */}
+      <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
+        {/* Changed overflow-visible to overflow-hidden, added pt-6 pb-6 to match TradeblocksTable */}
+        <CardContent className="p-0">
+          {/* Changed pr-2 pl-2 pt-0 pb-0 to p-0 to match TradeblocksTable’s CardContent */}
+          <div className="px-2">
+            {/* Added table wrapper with p-2 border rounded-md mt-2 mb-2 to match TradeblocksTable */}
+            <Table className="min-w-0 w-full">
+              {/* Added min-w-0 w-full to match TradeblocksTable */}
+              <TableBody>
+                <TableRow>
                   <TableCell
-                    className={`text-right py-2 ${
-                      item && item.totalReturn < 0 ? "text-[#FF5252]" : "text-[#4CAF50]"
-                    }`}
+                    colSpan={3}
+                    className="text-sm font-normal text-center pt-0 px-1 h-5 align-middle"
                   >
-                    {item
-                      ? item.totalReturn > 0
-                        ? `+${formatter.format(item.totalReturn)}`
-                        : formatter.format(item.totalReturn)
-                      : ""}
+                    TOP 5 WINNERS
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                {rows.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="text-sm font-normal text-left px-1 py-1">
+                      {/* Changed py-2 to px-1 py-1 to match TradeblocksTable */}
+                      {item
+                        ? new Date(item.dateEntered).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "2-digit",
+                            year: "numeric",
+                          })
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell className="text-sm font-normal text-left px-1 py-1">
+                      {/* Changed py-2 to px-1 py-1, kept text-sm font-normal */}
+                      {item ? item.symbol : ""}
+                    </TableCell>
+                    <TableCell
+                      className={`text-sm font-normal text-right px-1 py-1 ${
+                        item && item.totalReturn < 0 ? "text-[#FF5252]" : "text-[#4CAF50]"
+                      }`}
+                    >
+                      {item
+                        ? item.totalReturn > 0
+                          ? `+${formatter.format(item.totalReturn)}`
+                          : formatter.format(item.totalReturn)
+                        : ""}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

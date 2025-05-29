@@ -141,7 +141,7 @@ export function Range({
     <div className="flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-4">
         <div>
-          <Label className="text-gray-900 dark:text-gray-100">From</Label>
+          <Label className="text-gray-900 dark:text-gray-100 pb-2">From:</Label>
           <DatePickerWithRange
             date={fromDate}
             setDate={setFromDate}
@@ -151,7 +151,7 @@ export function Range({
           />
         </div>
         <div>
-          <Label className="text-gray-900 dark:text-gray-100">To</Label>
+          <Label className="text-gray-900 dark:text-gray-100 pb-2">To:</Label>
           <DatePickerWithRange
             date={toDate}
             setDate={setToDate}

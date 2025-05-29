@@ -82,11 +82,10 @@ interface TradeAnalyticsProps {
   displayedMarket: string;
 }
 
-// Define initialDateRange outside the component
 const today = new Date();
 const initialDateRange: DateRange = {
-  from: new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1)), // May 1, 2025
-  to: new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())), // May 29, 2025
+  from: new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1)),
+  to: new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())),
 };
 
 export function TradeAnalytics({
@@ -214,7 +213,7 @@ export function TradeAnalytics({
         }
         setRefreshKey((prev) => prev + 1);
         setLastFetchedRange({ dateStart, dateEnd });
-        setFiltersApplied(false); // Reset to prevent re-fetching
+        setFiltersApplied(false);
       } else {
         throw new Error(result.error || "Failed to fetch analytics data");
       }
@@ -329,11 +328,18 @@ export function TradeAnalytics({
   if (error || !analyticsData) {
     console.log("Rendering error state", { error, hasAnalyticsData: !!analyticsData });
     return (
-      <div className="flex items-center justify-center min-w-[48rem]">
+      <div className="flex items-center justify-center font-sans text-sm font-normal min-w-[48rem]">
+        {/* Added font-sans text-sm font-normal to match TradeblocksTable */}
         <Card className="max-w-3xl w-full">
           <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-red-500">Trade Analytics</CardTitle>
-            <CardDescription className="text-sm font-normal">{error || "No data available"}</CardDescription>
+            <CardTitle className="text-2xl font-semibold text-red-500">
+              {/* Updated to text-2xl font-semibold text-red-500 */}
+              Trade Analytics
+            </CardTitle>
+            <CardDescription className="text-sm font-normal">
+              {/* Updated to text-sm font-normal */}
+              {error || "No data available"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm font-normal">Request Arguments:</p>
@@ -386,12 +392,16 @@ export function TradeAnalytics({
   });
 
   return (
-    <div className="flex flex-col items-center min-w-[48rem] pt-6 gap-4 pb-0">
+    <div className="flex flex-col items-center font-sans text-sm font-normal min-w-[48rem] pt-6 gap-4 pb-0">
+      {/* Added font-sans text-sm font-normal to match TradeblocksTable */}
       <Card className="max-w-3xl w-full pb-3">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">
-              <CardTitle className="text-2xl font-semibold">Trade Analytics</CardTitle>
+              <CardTitle className="text-2xl font-semibold">
+                {/* Updated to text-2xl font-semibold */}
+                Trade Analytics
+              </CardTitle>
             </div>
             <BurgerMenu
               onExportReport={() => console.log("Exporting Report as PDF from TradeAnalytics")}
@@ -405,6 +415,7 @@ export function TradeAnalytics({
             />
           </div>
           <CardDescription className="pb-1 pt-0 text-sm font-normal text-left">
+            {/* Updated to text-sm font-normal */}
             {`${marketNames[displayedMarket] || "Global"} Market from ${formatDateRange(displayedDateRange)}. The values displayed are in ${getCurrency()}.`}
           </CardDescription>
           <Tabs
@@ -414,6 +425,7 @@ export function TradeAnalytics({
             className="pt-1 pb-0"
           >
             <TabsList className="grid w-full grid-cols-3 text-sm font-semibold">
+              {/* Retained text-sm font-semibold as it matches TradeblocksTable table headers */}
               <TabsTrigger value="longAndShort">LONG & SHORT</TabsTrigger>
               <TabsTrigger value="long">LONG</TabsTrigger>
               <TabsTrigger value="short">SHORT</TabsTrigger>

@@ -55,35 +55,47 @@ export function StatsTable({
   const isPHMarket = selectedMarket === "PH";
 
   return (
-    <div className="flex items-center justify-center pr-3 pb-3">
-      <Card className="max-w-3xl w-full overflow-visible shadow-none pt-0 pb-0">
-        <CardContent className="pr-2 pl-2 pt-0 pb-0">
-          <Table>
-            <TableBody>
-              {colsNames
-                .filter((colName) => (isPHMarket ? !colName.includes("(USD)") : !colName.includes("(PHP)")))
-                .map((colName, index) => {
-                  const dataKey = colMappings[colName];
-                  let value: number | string | null;
+    <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
+      {/* Retained font-sans text-sm font-normal */}
+      <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
+        {/* Added overflow-hidden pt-6 pb-6 to match WinnersTable/TradeblocksTable */}
+        <CardContent className="p-0">
+          {/* Changed pr-2 pl-2 pt-0 pb-0 to p-0 to match WinnersTable */}
+          <div className="px-2">
+            {/* Added px-2 table wrapper to match WinnersTable */}
+            <Table className="min-w-0 w-full">
+              {/* Added min-w-0 w-full to match WinnersTable/TradeblocksTable */}
+              <TableBody>
+                {colsNames
+                  .filter((colName) => (isPHMarket ? !colName.includes("(USD)") : !colName.includes("(PHP)")))
+                  .map((colName, index) => {
+                    const dataKey = colMappings[colName];
+                    let value: number | string | null;
 
-                  // Handle the computed Winners / Trades field
-                  if (dataKey === "winsOverTrades") {
-                    value = `${data.numberOfWins} / ${data.numberOfTrades}`;
-                  } else {
-                    value = dataKey && data[dataKey] !== undefined ? data[dataKey] : "N/A";
-                  }
+                    // Handle the computed Winners / Trades field
+                    if (dataKey === "winsOverTrades") {
+                      value = `${data.numberOfWins} / ${data.numberOfTrades}`;
+                    } else {
+                      value = dataKey && data[dataKey] !== undefined ? data[dataKey] : "N/A";
+                    }
 
-                  return (
-                    <TableRow key={index} className="text-sm font-normal">
-                      <TableCell className="font-semibold py-2 text-left">{colName}</TableCell>
-                      <TableCell className={`text-right py-2 ${shouldColorCode(colName, value)}`}>
-                        {formatValue(value, colName)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
+                    return (
+                      <TableRow key={index}>
+                        <TableCell className="text-sm font-normal text-left px-1 py-1">
+                          {/* Changed py-2 to px-1 py-1 to match WinnersTable/TradeblocksTable */}
+                          {colName}
+                        </TableCell>
+                        <TableCell
+                          className={`text-sm font-normal text-right px-1 py-1 ${shouldColorCode(colName, value)}`}
+                        >
+                          {formatValue(value, colName)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

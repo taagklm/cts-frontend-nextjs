@@ -2,11 +2,8 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function normalizeDateToUTC(date: Date): Date {
   if (isNaN(date.getTime())) {
@@ -14,6 +11,11 @@ function normalizeDateToUTC(date: Date): Date {
     return new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()));
   }
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+}
+
+// Get number of days in a month, accounting for leap years
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
 }
 
 export function DatePickerWithRange({
@@ -30,8 +32,29 @@ export function DatePickerWithRange({
   setIsValid?: (isValid: boolean) => void;
 }) {
   const today = normalizeDateToUTC(new Date());
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  const currentDay = today.getDate();
   const [localError, setLocalError] = React.useState<string | null>(null);
   const [hasSelected, setHasSelected] = React.useState(false);
+  const [year, setYear] = React.useState<string | undefined>();
+  const [month, setMonth] = React.useState<string | undefined>();
+  const [day, setDay] = React.useState<string | undefined>();
+  const [hasSelectedYear, setHasSelectedYear] = React.useState(false);
+  const [hasSelectedMonth, setHasSelectedMonth] = React.useState(false);
+  const [hasSelectedDay, setHasSelectedDay] = React.useState(false);
+
+  // Generate years, months, and days for dropdowns
+  const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => currentYear - i);
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+  const availableYears = years.filter((year) => year <= currentYear);
+  const days = Array.from(
+    { length: getDaysInMonth(Number(year) || currentYear, Number(month) || currentMonth) },
+    (_, i) => i + 1
+  );
 
   console.log(`DatePickerWithRange (${mode}): Initialized`, {
     date: date?.toISOString(),
@@ -43,34 +66,77 @@ export function DatePickerWithRange({
       console.log(`DatePickerWithRange (${mode}): Date Updated:`, {
         date: date.toISOString(),
       });
+      setYear(date.getFullYear().toString());
+      setMonth(date.getMonth().toString());
+      setDay(date.getDate().toString());
+      setHasSelectedYear(true);
+      setHasSelectedMonth(true);
+      setHasSelectedDay(true);
+      setHasSelected(true);
     } else {
       console.log(`DatePickerWithRange (${mode}): Date Invalid or Undefined:`, { date });
+      setYear(undefined);
+      setMonth(undefined);
+      setDay(undefined);
+      setHasSelectedYear(false);
+      setHasSelectedMonth(false);
+      setHasSelectedDay(false);
+      setHasSelected(false);
+      setLocalError(null); // Clear error when date is reset
     }
   }, [date, mode]);
 
   React.useEffect(() => {
-    const isValid = !localError && hasSelected;
+    const isValid = !localError && hasSelected && !!date && !isNaN(date.getTime());
     setIsValid?.(isValid);
-    console.log(`DatePickerWithRange (${mode}): Validity updated:`, { isValid, localError });
-  }, [localError, hasSelected, mode, setIsValid]);
+    console.log(`DatePickerWithRange (${mode}): Validity updated:`, {
+      isValid,
+      localError,
+      hasSelected,
+      date: date?.toISOString(),
+    });
+  }, [localError, hasSelected, date, mode, setIsValid]);
 
   const handleSelect = React.useCallback(
-    (selectedDate: Date | undefined) => {
-      console.log(`DatePickerWithRange (${mode}): handleSelect`, { selectedDate });
-      if (!selectedDate) {
-        setLocalError("Please select a date");
-        setError?.("Please select a date");
+    (selectedYear: number, selectedMonth: number, selectedDay: number) => {
+      console.log(`DatePickerWithRange (${mode}): handleSelect`, {
+        selectedYear,
+        selectedMonth,
+        selectedDay,
+      });
+
+      const finalYear = selectedYear ?? (hasSelectedYear ? Number(year) : undefined);
+      const finalMonth = selectedMonth ?? (hasSelectedMonth ? Number(month) : undefined);
+      const finalDay = selectedDay ?? (hasSelectedDay ? Number(day) : undefined);
+
+      if (finalYear === undefined || finalMonth === undefined || finalDay === undefined) {
+        setLocalError("Please select a complete date");
+        setError?.("Please select a complete date");
         setHasSelected(false);
         setDate(undefined);
-        console.log(`DatePickerWithRange (${mode}): No date selected`);
+        console.log(`DatePickerWithRange (${mode}): Incomplete date selected`, {
+          finalYear,
+          finalMonth,
+          finalDay,
+        });
         return;
       }
 
-      const normalizedDate = normalizeDateToUTC(selectedDate);
+      if (isNaN(finalYear) || isNaN(finalMonth) || isNaN(finalDay)) {
+        setLocalError("Please select a valid date");
+        setError?.("Please select a valid date");
+        setHasSelected(false);
+        setDate(undefined);
+        console.log(`DatePickerWithRange (${mode}): Invalid date selected`);
+        return;
+      }
+
+      const normalizedDate = normalizeDateToUTC(new Date(finalYear, finalMonth, finalDay));
       if (normalizedDate > today) {
         setLocalError("Date cannot be in the future");
         setError?.("Date cannot be in the future");
         setHasSelected(false);
+        setDate(undefined);
         console.log(`DatePickerWithRange (${mode}): Future date selected`, { normalizedDate });
         return;
       }
@@ -79,52 +145,122 @@ export function DatePickerWithRange({
       setError?.(null);
       setHasSelected(true);
       setDate(normalizedDate);
+      setYear(finalYear.toString());
+      setMonth(finalMonth.toString());
+      setDay(finalDay.toString());
       console.log(`DatePickerWithRange (${mode}): Date selected`, {
         normalizedDate: normalizedDate.toISOString(),
       });
     },
-    [mode, setError, setDate, today]
+    [mode, setError, setDate, today, year, month, day, hasSelectedYear, hasSelectedMonth, hasSelectedDay]
   );
-
-  const getDisplayText = () => {
-    if (!date || isNaN(date.getTime()) || !hasSelected) {
-      return mode === "from" ? "From: yyyy-mm-dd" : "To: yyyy-mm-dd";
-    }
-    try {
-      return format(date, "yyyy-MM-dd");
-    } catch (error) {
-      console.error(`DatePickerWithRange (${mode}): Error formatting date:`, error);
-      return "Invalid date";
-    }
-  };
 
   return (
     <div className={cn("grid gap-2")}>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id={`date-${mode}`}
-            variant={"outline"}
-            className={cn(
-              "w-[200px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {getDisplayText()}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={handleSelect}
-            disabled={(date) => date > today}
-            initialFocus
-          />
-          {localError && <p className="text-sm text-red-500 p-3">{localError}</p>}
-        </PopoverContent>
-      </Popover>
+      <div className="flex space-x-2">
+        <Select
+          value={year}
+          onValueChange={(value) => {
+            const newYear = parseInt(value);
+            setYear(value);
+            setHasSelectedYear(true);
+            let newMonth = Number(month) ?? currentMonth;
+            let newDay = Number(day) ?? currentDay;
+            if (newYear === currentYear && newMonth > currentMonth) {
+              newMonth = currentMonth;
+              newDay = currentDay;
+              setMonth(newMonth.toString());
+              setDay(newDay.toString());
+            } else if (newYear === currentYear && newMonth === currentMonth && newDay > currentDay) {
+              newDay = currentDay;
+              setDay(newDay.toString());
+            }
+            const maxDays = getDaysInMonth(newYear, newMonth);
+            if (newDay > maxDays) {
+              newDay = maxDays;
+              setDay(newDay.toString());
+            }
+            console.log(`Custom ${mode} Year Select:`, { value: newYear, month: newMonth, day: newDay });
+            handleSelect(newYear, newMonth, newDay);
+          }}
+        >
+          <SelectTrigger id={`year-${mode}`} className="w-[100px] border-gray-300 rounded-md">
+            <SelectValue placeholder="yyyy" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableYears.map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={month}
+          onValueChange={(value) => {
+            const newMonth = parseInt(value);
+            setMonth(value);
+            setHasSelectedMonth(true);
+            let newDay = Number(day) ?? currentDay;
+            if ((Number(year) || currentYear) === currentYear && newMonth === currentMonth && newDay > currentDay) {
+              newDay = currentDay;
+              setDay(newDay.toString());
+            }
+            const maxDays = getDaysInMonth(Number(year) || currentYear, newMonth);
+            if (newDay > maxDays) {
+              newDay = maxDays;
+              setDay(newDay.toString());
+            }
+            console.log(`Custom ${mode} Month Select:`, { value: newMonth, day: newDay });
+            handleSelect(Number(year) || currentYear, newMonth, newDay);
+          }}
+        >
+          <SelectTrigger id={`month-${mode}`} className="w-[120px] min-w-[120px] border-gray-300 rounded-md">
+            <SelectValue placeholder="mm" />
+          </SelectTrigger>
+          <SelectContent>
+            {months.map((month, index) => (
+              <SelectItem
+                key={month}
+                value={index.toString()}
+                disabled={(Number(year) || currentYear) === currentYear && index > currentMonth}
+              >
+                {month}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={day}
+          onValueChange={(value) => {
+            const newDay = parseInt(value);
+            setDay(value);
+            setHasSelectedDay(true);
+            console.log(`Custom ${mode} Day Select:`, { value: newDay });
+            handleSelect(Number(year) || currentYear, Number(month) || currentMonth, newDay);
+          }}
+        >
+          <SelectTrigger id={`day-${mode}`} className="w-[80px] border-gray-300 rounded-md">
+            <SelectValue placeholder="dd" />
+          </SelectTrigger>
+          <SelectContent>
+            {days.map((day) => (
+              <SelectItem
+                key={day}
+                value={day.toString()}
+                disabled={
+                  (Number(year) || currentYear) === currentYear &&
+                  (Number(month) || currentMonth) === currentMonth &&
+                  day > currentDay
+                }
+              >
+                {day}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {localError && <p className="text-sm text-red-500 mt-2">{localError}</p>}
     </div>
   );
 }

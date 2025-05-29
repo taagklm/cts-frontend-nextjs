@@ -110,9 +110,9 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
   return (
     <Card className="mb-3 max-w-3xl w-full overflow-visible shadow-none pb-0">
       <CardHeader>
-        <CardTitle>Profit Distribution</CardTitle>
+        <CardTitle className="text-xl font-semibold">Profit Distribution</CardTitle>
       </CardHeader>
-      <CardContent className="pt-4 pr-4 pt-4 pb-0">
+      <CardContent className="p-0">
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer
