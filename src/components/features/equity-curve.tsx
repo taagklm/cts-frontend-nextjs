@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { Card, CardHeader, CardDescription, CardContent } from "../ui/card";
+import { Card, CardHeader, CardDescription, CardContent, CardTitle } from "../ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -91,7 +91,7 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
       <div className="flex items-center justify-center min-w-[48rem]">
         <Card className="max-w-3xl w-full pb-0 mb-6">
           <CardHeader>
-            <h1 className="text-2xl font-bold">Equity Curve</h1>
+            <h1 className="text-2xl font-bold pb-2">Equity Curve</h1>
             <CardDescription>No equity data available for account: {selectedAccount}</CardDescription>
           </CardHeader>
         </Card>
@@ -110,11 +110,9 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
     <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
       <Card className="max-w-3xl w-full">
         <CardHeader className="pb-0">
-          <div className="grid grid-cols-5">
-            <div className="col-span-4">
-              <h1 className="text-2xl font-bold">Equity Curve</h1>
-            </div>
-          </div>
+          <CardTitle className="text-2xl font-semibold">
+              Equity Curve
+            </CardTitle>
           <CardDescription className="pb-0 pt-0">
             {`${marketNames[market] || "Global"} Market from ${format(
               effectiveDateRange.from!,
