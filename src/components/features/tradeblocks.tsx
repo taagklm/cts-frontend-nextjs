@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui/card";
 
 interface Tradeblock {
   id: number;
@@ -90,7 +89,6 @@ const defaultVisibleColumns = [
 const TradeblocksTable: React.FC<TradeblocksTableProps> = ({ initialData, initialError }) => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(defaultVisibleColumns);
-  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [tradeblocksData, setTradeblocksData] = useState<Tradeblock[]>(initialData);
   const [error, setError] = useState<string | null>(initialError);
@@ -167,19 +165,15 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({ initialData, initia
     );
   };
 
-  // Filter and sort trades
-  const trades: Tradeblock[] = tradeblocksData
-    .filter((trade) =>
-      searchTerm ? trade.symbol.toLowerCase().includes(searchTerm.toLowerCase()) : true
-    )
-    .sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.totalRealizedPnlUsd - b.totalRealizedPnlUsd;
-      } else if (sortOrder === "desc") {
-        return b.totalRealizedPnlUsd - a.totalRealizedPnlUsd;
-      }
-      return 0;
-    });
+  // Sort trades
+  const trades: Tradeblock[] = tradeblocksData.sort((a, b) => {
+    if (sortOrder === "asc") {
+      return a.totalRealizedPnlUsd - b.totalRealizedPnlUsd;
+    } else if (sortOrder === "desc") {
+      return b.totalRealizedPnlUsd - a.totalRealizedPnlUsd;
+    }
+    return 0;
+  });
 
   // Pagination
   const totalPages = Math.ceil(trades.length / pageSize);
@@ -230,11 +224,11 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({ initialData, initia
 
   if (error || !tradeblocksData) {
     return (
-      <div className="flex items-center justify-center min-w-[48rem]">
-        <Card className="max-w-3xl w-full">
+      <div className="flex items-start justify-center font-sans text-sm font-normal w-full ml-12 max-w-[calc(100%-12rem)] min-h-0">
+        <Card className="max-w-[calc(100%-1rem)] w-full mx-2 overflow-hidden pt-4 pb-6 bg-white dark:bg-gray-900">
           <CardHeader>
             <CardTitle className="text-red-500">Error Fetching Tradeblocks</CardTitle>
-            <CardDescription>{error || "No data available"}</CardDescription>
+            <CardDescription className="pb-0 text-sm font-normal">{error || "No data available"}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -242,121 +236,122 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({ initialData, initia
   }
 
   return (
-    <div className="w-full max-w-full box-border">
-      <div className="flex items-center py-2">
-        <Input
-          placeholder="Search by symbol"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {columns.map((column) => (
-              <DropdownMenuCheckboxItem
-                key={column.key}
-                checked={visibleColumns.includes(column.key)}
-                onCheckedChange={() => toggleColumn(column.key)}
-              >
-                {column.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="rounded-md border">
-        <Table className="w-full max-w-full table-fixed box-border">
-          <TableHeader>
-            <TableRow>
-              {columns.map(
-                (column) =>
-                  visibleColumns.includes(column.key) && (
-                    <TableHead
-                      key={column.key}
-                      className={`${column.width} ${column.align === "right" ? "text-right" : ""} ${
-                        column.hideMobile ? "hidden sm:table-cell" : ""
-                      } text-foreground h-10 px-2 align-middle font-medium whitespace-nowrap truncate`}
-                    >
-                      {column.key === "totalRealizedPnlUsd" ? (
-                        <Button
-                          variant="ghost"
-                          className="p-0"
-                          onClick={handleSort}
-                        >
-                          {column.label}
-                          {sortOrder === "asc" ? " ↑" : sortOrder === "desc" ? " ↓" : ""}
-                        </Button>
-                      ) : (
-                        column.label
-                      )}
-                    </TableHead>
-                  )
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedTrades.length ? (
-              paginatedTrades.map((trade) => (
-                <TableRow key={trade.id}>
+    <div className="flex items-start justify-center font-sans text-sm font-normal w-full max-w-[calc(100%-16rem)] sm:max-w-[1280px]">
+      <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-4 bg-white dark:bg-gray-900">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold">Tradeblocks</CardTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Columns <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {columns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.key}
+                    checked={visibleColumns.includes(column.key)}
+                    onCheckedChange={() => toggleColumn(column.key)}
+                  >
+                    {column.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-2">
+          <div className="w-full flex-grow rounded-md border p-2 mb-2">
+            <Table className="min-w-0 w-full">
+              <TableHeader>
+                <TableRow>
                   {columns.map(
                     (column) =>
                       visibleColumns.includes(column.key) && (
-                        <TableCell
+                        <TableHead
                           key={column.key}
-                          className={`${column.width} ${column.align === "right" ? "text-right" : ""} ${
+                          className={`text-center text-sm font-semibold px-1 h-10 align-middle whitespace-nowrap truncate ${
                             column.hideMobile ? "hidden sm:table-cell" : ""
-                          } px-2 py-1 text-xs truncate overflow-hidden box-border`}
-                          style={{
-                            color:
-                              column.key === "totalRealizedPnlUsd"
-                                ? trade.totalRealizedPnlUsd >= 0
-                                  ? "#26a69a"
-                                  : "#ef5350"
-                                : undefined,
-                          }}
+                          }`}
                         >
-                          {renderCellValue(trade, column)}
-                        </TableCell>
+                          {column.key === "totalRealizedPnlUsd" ? (
+                            <Button
+                              variant="ghost"
+                              className="p-0 flex items-center gap-1 justify-center w-full"
+                              onClick={handleSort}
+                            >
+                              {column.label}
+                              {sortOrder === "asc" ? " ↑" : sortOrder === "desc" ? " ↓" : ""}
+                            </Button>
+                          ) : (
+                            <span className="flex items-center gap-1 justify-center">
+                              {column.label}
+                            </span>
+                          )}
+                        </TableHead>
                       )
                   )}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </Button>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {paginatedTrades.length ? (
+                  paginatedTrades.map((trade) => (
+                    <TableRow key={trade.id}>
+                      {columns.map(
+                        (column) =>
+                          visibleColumns.includes(column.key) && (
+                            <TableCell
+                              key={column.key}
+                              className={`text-center px-1 py-1 text-xs truncate text-ellipsis overflow-hidden ${
+                                column.hideMobile ? "hidden sm:table-cell" : ""
+                              }`}
+                              style={{
+                                color:
+                                  column.key === "totalRealizedPnlUsd"
+                                    ? trade.totalRealizedPnlUsd >= 0
+                                      ? "#26a69a"
+                                      : "#ef5350"
+                                    : undefined,
+                              }}
+                              title={renderCellValue(trade, column).toString()}
+                            >
+                              {renderCellValue(trade, column)}
+                            </TableCell>
+                          )
+                      )}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

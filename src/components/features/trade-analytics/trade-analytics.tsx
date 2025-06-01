@@ -399,7 +399,6 @@ export function TradeAnalytics({
           <div className="grid grid-cols-5">
             <div className="col-span-4">
               <CardTitle className="text-2xl font-semibold">
-                {/* Updated to text-2xl font-semibold */}
                 Trade Analytics
               </CardTitle>
             </div>

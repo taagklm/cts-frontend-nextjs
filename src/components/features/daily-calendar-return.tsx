@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
+import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
 
 // Define DayContentProps for react-day-picker v9.6.7
 interface DayContentProps {
@@ -15,31 +16,48 @@ interface DayContentProps {
   activeModifiers: Record<string, boolean>;
 }
 
-// Sample trade data structure
+// Updated trade data structure based on mockIbkrDailyPnl
 interface TradeDay {
   date: Date;
-  profit: number;
-  trades: number;
-  rMultiple: number;
-  percentage: number;
+  totalPnl: number;
+  realizedPnl: number;
+  unrealizedPnl: number;
+  hasTrades: number; // 1 if totalPnl != 0, else 0
 }
 
 interface WeekSummary {
-  profit: number;
+  totalPnl: number;
   days: number;
 }
 
-export function TradeCalendar() {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(2025, 4, 1)); // May 2025
 
-  // Sample trade data for May 2025
-  const [tradeData] = React.useState<TradeDay[]>([
-    { date: new Date(2025, 4, 5), profit: 600, trades: 1, rMultiple: 2.0, percentage: 100 },
-    { date: new Date(2025, 4, 13), profit: -638, trades: 2, rMultiple: -3.08, percentage: 0 },
-    { date: new Date(2025, 4, 10), profit: 100, trades: 1, rMultiple: 0.0, percentage: 100 },
-    { date: new Date(2025, 4, 15), profit: 225, trades: 3, rMultiple: 1.14, percentage: 33.33 },
-    { date: new Date(2025, 4, 16), profit: -37.5, trades: 2, rMultiple: -0.83, percentage: 50 },
-  ]);
+export function TradeCalendar() {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date(2025, 0, 1)); // January 2025
+
+  // Aggregate trade data from mockIbkrDailyPnl across accounts
+  const [tradeData] = React.useState<TradeDay[]>(() => {
+    const dateMap = new Map<string, TradeDay>();
+    
+    mockIbkrDailyPnl.forEach(({ dailyPnl }) => {
+      dailyPnl.forEach(({ date, totalPnl, realizedPnl, unrealizedPnl }) => {
+        const dateStr = date;
+        const existing = dateMap.get(dateStr) || {
+          date: parse(date, "yyyy-MM-dd", new Date()),
+          totalPnl: 0,
+          realizedPnl: 0,
+          unrealizedPnl: 0,
+          hasTrades: 0,
+        };
+        existing.totalPnl += totalPnl;
+        existing.realizedPnl += realizedPnl;
+        existing.unrealizedPnl += unrealizedPnl;
+        existing.hasTrades = existing.totalPnl !== 0 ? 1 : 0;
+        dateMap.set(dateStr, existing);
+      });
+    });
+
+    return Array.from(dateMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+  });
 
   // Precompute trade data map for faster lookup
   const tradeDataMap = React.useMemo(() => {
@@ -54,9 +72,9 @@ export function TradeCalendar() {
     const weekTrades = tradeData.filter(
       (trade) => trade.date >= weekStart && trade.date <= weekEnd
     );
-    const profit = weekTrades.reduce((sum, trade) => sum + trade.profit, 0);
-    const days = weekTrades.length;
-    return { profit, days };
+    const totalPnl = weekTrades.reduce((sum, trade) => sum + trade.totalPnl, 0);
+    const days = weekTrades.reduce((sum, trade) => sum + trade.hasTrades, 0);
+    return { totalPnl, days };
   };
 
   // Calculate week summaries for the current month
@@ -80,11 +98,8 @@ export function TradeCalendar() {
       const weekStart = new Date(d);
       const weekEnd = new Date(d);
       weekEnd.setDate(weekEnd.getDate() + 6);
-
-      if (weekEnd >= firstDayOfMonth && weekStart <= lastDayOfMonth) {
-        const summary = getWeekSummary(weekStart, weekEnd);
-        weeks.push(summary);
-      }
+      const summary = getWeekSummary(weekStart, weekEnd);
+      weeks.push(summary);
     }
 
     return { weekSummaries: weeks, numWeeks };
@@ -92,10 +107,10 @@ export function TradeCalendar() {
 
   const modifiers = {
     profitable: tradeData
-      .filter((trade) => trade.profit >= 0)
+      .filter((trade) => trade.totalPnl >= 0)
       .map((trade) => trade.date),
     loss: tradeData
-      .filter((trade) => trade.profit < 0)
+      .filter((trade) => trade.totalPnl < 0)
       .map((trade) => trade.date),
   };
 
@@ -104,23 +119,21 @@ export function TradeCalendar() {
     loss: "bg-red-100 text-red-800",
   };
 
-  // Calculate positions for weekly summaries
+  // Calculate positions for weekly summaries (copied from June 01, 2025, 03:49 AM PST)
   const renderWeekSummaries = () => {
-    const rowHeight = 96 + 9; // h-24 + mt-1 + m-[2px]
-    const dayHeaderHeight = 38; // Height of day headers (Sun, Mon, etc.), based on py-2 and text-[0.9rem]
-    const summaryHeaderHeight = 38; // Match day header height
-    const summaryHeight = 68; // Match day cell height (h-24)
+    const rowHeight = 96 + 10; // h-24 + mt-1 + m-[2px]
+    const dayHeaderHeight = 41; // Height of day headers (Sun, Mon, etc.), based on py-2 and text-[0.9rem]
     const calendarTopPadding = 16; // Calendar's pt-4 = 16px
 
     // Summary header, aligned with day headers
     const summaryHeader = (
       <div
         key="summary-header"
-        className="text-muted-foreground rounded-md w-24 font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50"
+        className="text-muted-foreground font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50 rounded-md"
         style={{
           position: "absolute",
           top: `${calendarTopPadding}px`, // Align with day headers (pt-4)
-          left: "2px", // Center in w-28 column (112px - 96px = 16px, 16/2 = 8px, adjust for m-[2px])
+          left: "4px", // Align with first column (2px margin + 2px for symmetry)
           width: "96px", // w-24, matches day cells
         }}
       >
@@ -134,7 +147,7 @@ export function TradeCalendar() {
         calendarTopPadding +
         dayHeaderHeight +
         index * rowHeight +
-        (rowHeight - summaryHeight) / 2;
+        6; // Adjust for mt-1 and centering
 
       return (
         <div
@@ -142,14 +155,14 @@ export function TradeCalendar() {
           className="text-sm absolute border border-gray-200 rounded-md m-[2px] w-24 h-24 flex flex-col items-center justify-center bg-gray-50"
           style={{
             top: `${topPosition}px`,
-            left: "2px", // Center in w-28 column
+            left: "4px", // Align with first column (2px margin + 2px for symmetry)
             width: "96px", // w-24, matches day cells
             height: "96px", // h-24, matches day cells
           }}
         >
           <p className="font-semibold">Week {index + 1}</p>
-          <p className={summary.profit >= 0 ? "text-green-600" : "text-red-600"}>
-            ${summary.profit.toFixed(2)}
+          <p className={summary.totalPnl >= 0 ? "text-green-600" : "text-red-600"}>
+            ${summary.totalPnl.toFixed(2)}
           </p>
           <p>{summary.days} days</p>
         </div>
@@ -217,15 +230,15 @@ export function TradeCalendar() {
                         {trade ? (
                           <div className="text-[9px] space-y-0.5 mt-0.5 flex-1 overflow-hidden">
                             <div
-                              className={trade.profit >= 0 ? "text-green-600" : "text-red-600"}
+                              className={trade.totalPnl >= 0 ? "text-green-600" : "text-red-600"}
                             >
-                              ${trade.profit.toFixed(2)}
+                              ${trade.totalPnl.toFixed(2)}
                             </div>
                             <div className="truncate">
-                              {trade.trades} {trade.trades === 1 ? "trade" : "trades"}
+                              Real: ${trade.realizedPnl.toFixed(2)}
                             </div>
                             <div className="truncate">
-                              {trade.rMultiple.toFixed(2)}R, {trade.percentage.toFixed(2)}%
+                              Unr: ${trade.unrealizedPnl.toFixed(2)}
                             </div>
                           </div>
                         ) : (
@@ -237,29 +250,16 @@ export function TradeCalendar() {
                     );
                   },
                   Head: () => (
-                    <thead className="flex mb-2">
+                    <thead>
                       <tr className="flex w-full">
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Sun
-                        </th>
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Mon
-                        </th>
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Tue
-                        </th>
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Wed
-                        </th>
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Thu
-                        </th>
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Fri
-                        </th>
-                        <th className="text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50">
-                          Sat
-                        </th>
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                          <th
+                            key={day}
+                            className="text-muted-foreground font-medium text-[0.9rem] py-2 text-center border border-gray-200 bg-gray-50 m-[2px] flex-1 rounded-md"
+                          >
+                            {day}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                   ),
@@ -269,12 +269,12 @@ export function TradeCalendar() {
                   month: "space-y-4 w-full",
                   caption: "hidden",
                   nav: "hidden",
-                  head_row: "flex mb-2",
+                  head_row: "flex w-full mb-2",
                   head_cell:
-                    "text-muted-foreground rounded-md w-full font-medium text-[0.9rem] py-2 text-center",
+                    "text-muted-foreground font-medium text-[0.9rem] py-2 text-center flex-1",
                   row: "flex w-full mt-1",
                   cell:
-                    "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 w-full aspect-square border border-gray-200 rounded-md m-[2px]",
+                    "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aspect-square border border-gray-200 m-[2px] rounded-md",
                   day: cn(
                     "h-24 w-full p-0 font-normal aria-selected:opacity-100 rounded-md",
                     "flex items-center justify-center"
@@ -286,7 +286,7 @@ export function TradeCalendar() {
                 className="pt-4 pb-0 pr-0 pl-0"
               />
             </div>
-            <div className="w-28 relative">{renderWeekSummaries()}</div>
+            <div className="w-[104px] relative">{renderWeekSummaries()}</div>
           </div>
         </CardContent>
       </Card>

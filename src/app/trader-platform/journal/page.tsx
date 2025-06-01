@@ -7,7 +7,6 @@ import { mockTradeblocks } from "@/mock-data/tradeblocks";
 
 export const metadata = {
   title: "CTS | Journal",
-  description: "Trader Journal",
 };
 
 export default async function Page() {
@@ -42,7 +41,7 @@ export default async function Page() {
   }
 
   return (
-    <div className="w-full max-w-[1280px]">
+    <div className="w-full max-w-[1280px] mx-auto sm:p-6">
       <Card className="border-none shadow-none">
         <div className="px-12 pt-0">
           <TradeblocksTable initialData={tradeblocksData} initialError={error} />

@@ -3,12 +3,10 @@
 import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -23,7 +21,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -277,18 +274,15 @@ interface TradersPerformanceTableProps {
 
 export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
   const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     initialState: {
       pagination: {
@@ -297,30 +291,19 @@ export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) 
     },
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
     },
   });
 
   return (
     <div className="flex items-start justify-center font-sans text-sm font-normal w-full max-w-[calc(100%-16rem)] sm:max-w-[1280px]">
-      <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-6 bg-white dark:bg-gray-900">
+      <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-4 bg-white dark:bg-gray-900">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Traders Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center pb-2">
-            <Input
-              placeholder="Search by trader"
-              value={(table.getColumn("trader")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("trader")?.setFilterValue(event.target.value)
-              }
-              className="max-w-sm"
-            />
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold">Traders</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
+                <Button variant="outline">
                   Columns <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -340,7 +323,10 @@ export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) 
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="w-full flex-grow rounded-md border p-2 mt-2 mb-2">
+        </CardHeader>
+
+        <CardContent>
+          <div className="w-full flex-grow rounded-md border pr-2 pl-2 pt-0 pb-2 mb-2">
             <Table className="min-w-0 w-full">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -401,6 +387,7 @@ export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) 
             </Button>
           </div>
         </CardContent>
+
       </Card>
     </div>
   );
