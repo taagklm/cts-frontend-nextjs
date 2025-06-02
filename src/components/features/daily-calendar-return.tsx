@@ -7,22 +7,26 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parse } from "date-fns";
-import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
 
-// Define DayContentProps for react-day-picker v9.6.7
-interface DayContentProps {
-  date: Date;
-  displayMonth: Date;
-  activeModifiers: Record<string, boolean>;
+// Define interfaces
+interface DailyPnl {
+  date: string;
+  totalPnl: number;
+  realizedPnl: number;
+  unrealizedPnl: number;
 }
 
-// Updated trade data structure based on mockIbkrDailyPnl
+interface AccountPnl {
+  account: string;
+  dailyPnl: DailyPnl[];
+}
+
 interface TradeDay {
   date: Date;
   totalPnl: number;
   realizedPnl: number;
   unrealizedPnl: number;
-  hasTrades: number; // 1 if totalPnl != 0, else 0
+  hasTrades: number;
 }
 
 interface WeekSummary {
@@ -30,36 +34,106 @@ interface WeekSummary {
   days: number;
 }
 
+interface DayContentProps {
+  date: Date;
+  displayMonth: Date;
+  activeModifiers: Record<string, boolean>;
+}
 
-export function TradeCalendar() {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(2025, 0, 1)); // January 2025
+interface TradeCalendarProps {
+  accountNo: string;
+  phAccountNo: string;
+  market: string;
+}
 
-  // Aggregate trade data from mockIbkrDailyPnl across accounts
-  const [tradeData] = React.useState<TradeDay[]>(() => {
-    const dateMap = new Map<string, TradeDay>();
-    
-    mockIbkrDailyPnl.forEach(({ dailyPnl }) => {
-      dailyPnl.forEach(({ date, totalPnl, realizedPnl, unrealizedPnl }) => {
-        const dateStr = date;
-        const existing = dateMap.get(dateStr) || {
-          date: parse(date, "yyyy-MM-dd", new Date()),
-          totalPnl: 0,
-          realizedPnl: 0,
-          unrealizedPnl: 0,
-          hasTrades: 0,
-        };
-        existing.totalPnl += totalPnl;
-        existing.realizedPnl += realizedPnl;
-        existing.unrealizedPnl += unrealizedPnl;
-        existing.hasTrades = existing.totalPnl !== 0 ? 1 : 0;
-        dateMap.set(dateStr, existing);
+export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarProps) {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date(2025, 5, 1)); // June 2025
+  const [tradeData, setTradeData] = React.useState<TradeDay[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Define fetchDailyPnl at component scope
+  const fetchDailyPnl = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const dateStart = format(
+        new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
+        "yyyy-MM-dd"
+      );
+      const dateEnd = format(
+        new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0),
+        "yyyy-MM-dd"
+      );
+
+      const requestBody = {
+        market,
+        account: market === "PH" ? phAccountNo : accountNo,
+        dateStart,
+        dateEnd,
+      };
+      console.log("Fetching daily PnL with body:", requestBody);
+
+      const response = await fetch("/api/dailypnl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
-    });
 
-    return Array.from(dateMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
-  });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Failed to fetch daily PnL (Status: ${response.status})`
+        );
+      }
 
-  // Precompute trade data map for faster lookup
+      const data: AccountPnl[] = await response.json();
+      console.log("Received data for account:", requestBody.account, data);
+
+      if (!data.length) {
+        setError(`No data found for account ${requestBody.account}`);
+        setTradeData([]);
+        return;
+      }
+
+      const dateMap = new Map<string, TradeDay>();
+      data.forEach(({ dailyPnl }) => {
+        dailyPnl.forEach(({ date, totalPnl, realizedPnl, unrealizedPnl }) => {
+          const dateStr = date;
+          const existing = dateMap.get(dateStr) || {
+            date: parse(date, "yyyy-MM-dd", new Date()),
+            totalPnl: 0,
+            realizedPnl: 0,
+            unrealizedPnl: 0,
+            hasTrades: 0,
+          };
+          existing.totalPnl += totalPnl;
+          existing.realizedPnl += realizedPnl;
+          existing.unrealizedPnl += unrealizedPnl;
+          existing.hasTrades = existing.totalPnl !== 0 ? 1 : 0;
+          dateMap.set(dateStr, existing);
+        });
+      });
+
+      const aggregatedData = Array.from(dateMap.values()).sort(
+        (a, b) => a.date.getTime() - b.date.getTime()
+      );
+      console.log("Aggregated trade data:", aggregatedData);
+      setTradeData(aggregatedData);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "An error occurred while fetching data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data when currentMonth, accountNo, phAccountNo, or market changes
+  React.useEffect(() => {
+    fetchDailyPnl();
+  }, [currentMonth, accountNo, phAccountNo, market]);
+
+  // Precompute trade data map
   const tradeDataMap = React.useMemo(() => {
     const map = new Map<string, TradeDay>();
     tradeData.forEach((trade) => {
@@ -77,7 +151,6 @@ export function TradeCalendar() {
     return { totalPnl, days };
   };
 
-  // Calculate week summaries for the current month
   const { weekSummaries, numWeeks } = React.useMemo(() => {
     const weeks: WeekSummary[] = [];
     const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
@@ -103,7 +176,7 @@ export function TradeCalendar() {
     }
 
     return { weekSummaries: weeks, numWeeks };
-  }, [currentMonth]);
+  }, [currentMonth, tradeData]);
 
   const modifiers = {
     profitable: tradeData
@@ -119,45 +192,38 @@ export function TradeCalendar() {
     loss: "bg-red-100 text-red-800",
   };
 
-  // Calculate positions for weekly summaries (copied from June 01, 2025, 03:49 AM PST)
   const renderWeekSummaries = () => {
-    const rowHeight = 96 + 10; // h-24 + mt-1 + m-[2px]
-    const dayHeaderHeight = 41; // Height of day headers (Sun, Mon, etc.), based on py-2 and text-[0.9rem]
-    const calendarTopPadding = 16; // Calendar's pt-4 = 16px
+    const rowHeight = 106; // Adjusted to match calendar row height (96px + 8px margin)
+    const dayHeaderHeight = 38; // Day headers (Sun, Mon, etc.)
+    const calendarTopPadding = 14; // pt-4
 
-    // Summary header, aligned with day headers
     const summaryHeader = (
       <div
         key="summary-header"
-        className="text-muted-foreground font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-[2px] bg-gray-50 rounded-md"
+        className="text-muted-foreground font-medium text-[0.9rem] py-2 text-center border border-gray-200 m-1 bg-gray-50 rounded-md"
         style={{
           position: "absolute",
-          top: `${calendarTopPadding}px`, // Align with day headers (pt-4)
-          left: "4px", // Align with first column (2px margin + 2px for symmetry)
-          width: "96px", // w-24, matches day cells
+          top: `${calendarTopPadding}px`,
+          left: "4px",
+          width: "96px",
         }}
       >
         Weekly
       </div>
     );
 
-    // Weekly summary cells, sized like day cells
     const summaryCards = weekSummaries.map((summary, index) => {
-      const topPosition =
-        calendarTopPadding +
-        dayHeaderHeight +
-        index * rowHeight +
-        6; // Adjust for mt-1 and centering
-
+      const topPosition = calendarTopPadding + dayHeaderHeight + index * rowHeight + 8; // Increased offset
+      console.log("Summary card position:", { index, topPosition });
       return (
         <div
           key={`week-${index}`}
-          className="text-sm absolute border border-gray-200 rounded-md m-[2px] w-24 h-24 flex flex-col items-center justify-center bg-gray-50"
+          className="text-sm absolute border border-gray-200 rounded-md m-1 w-24 h-24 flex flex-col items-center justify-center bg-gray-50"
           style={{
             top: `${topPosition}px`,
-            left: "4px", // Align with first column (2px margin + 2px for symmetry)
-            width: "96px", // w-24, matches day cells
-            height: "96px", // h-24, matches day cells
+            left: "4px",
+            width: "96px",
+            height: "98px",
           }}
         >
           <p className="font-semibold">Week {index + 1}</p>
@@ -171,6 +237,17 @@ export function TradeCalendar() {
 
     return [summaryHeader, ...summaryCards];
   };
+
+  // Early returns AFTER all hooks
+  if (loading) return <div>Loading...</div>;
+  if (error) return (
+    <div>
+      Error: {error}
+      <button onClick={fetchDailyPnl} className="ml-2 text-blue-600 underline">
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">

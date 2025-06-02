@@ -84,7 +84,11 @@ export function TraderPageClient({
         phAccountNo={phAccountNo}
         market={market}
       />
-      <TradeCalendar />
+      <TradeCalendar
+        accountNo={accountNo}
+        phAccountNo={phAccountNo}
+        market={market}
+      />
     </div>
   );
 }
