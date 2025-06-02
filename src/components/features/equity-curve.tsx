@@ -7,6 +7,8 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
+import { EquityBurgerMenu } from "./equity-curve/equity-burger-menu";
+
 
 interface DailyPnlEntry {
   date: string;
@@ -24,29 +26,38 @@ interface DailyPnlData {
 interface EquityCurveProps {
   accountNo: string;
   phAccountNo: string;
-  dateRange?: DateRange;
   market: string;
+  dateRange?: DateRange;
+  setDateRange?: (range: DateRange | undefined) => void;
 }
 
 const chartConfig = {
   totalPnl: {
     label: "Total P&L",
-    color: "#4CAF50", // Green matching StatsTable and ProfitDistributionChart
+    color: "#4CAF50",
   },
   negativePnl: {
     label: "Negative P&L",
-    color: "#FF5252", // Red matching StatsTable and ProfitDistributionChart
+    color: "#FF5252",
   },
 } satisfies ChartConfig;
 
-export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: EquityCurveProps) {
+export function EquityCurve({
+  accountNo,
+  phAccountNo,
+  market,
+  dateRange: propDateRange,
+  setDateRange: propSetDateRange,
+}: EquityCurveProps) {
   const today = new Date();
-  const [defaultDateRange] = useState<DateRange>({
-    from: startOfYear(today), // January 1, 2025
-    to: today, // May 22, 2025
+  const [localDateRange, setLocalDateRange] = useState<DateRange>({
+    from: startOfYear(today),
+    to: today,
   });
 
-  const effectiveDateRange = dateRange || defaultDateRange;
+  // Use propDateRange if valid, else localDateRange
+  const dateRange = propDateRange?.from && propDateRange?.to ? propDateRange : localDateRange;
+  const setDateRange = propSetDateRange || setLocalDateRange;
 
   const marketNames: { [key: string]: string } = {
     IB: "Global",
@@ -65,34 +76,40 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
     }
   };
 
-  // Select account based on market
   const selectedAccount = market === "PH" && phAccountNo ? phAccountNo : accountNo;
 
-  // Filter mockDailyPnl by selected account
   const accountData = mockIbkrDailyPnl.find((data) => data.account === selectedAccount) || {
     account: selectedAccount,
     currency: getCurrency(),
     dailyPnl: [],
   };
 
-  // Filter by date range
-  const filteredDailyPnl = effectiveDateRange.from && effectiveDateRange.to
+  const filteredDailyPnl = dateRange.from && dateRange.to
     ? accountData.dailyPnl.filter((entry) => {
         const entryDate = new Date(entry.date);
-        return entryDate >= effectiveDateRange.from! && entryDate <= effectiveDateRange.to!;
+        return entryDate >= dateRange.from! && entryDate <= dateRange.to!;
       })
     : accountData.dailyPnl;
-
-  // Calculate total P&L sum (not used in description but kept for potential future use)
-  const totalPnlSum = filteredDailyPnl.reduce((sum, entry) => sum + entry.totalPnl, 0);
 
   if (filteredDailyPnl.length === 0) {
     return (
       <div className="flex items-center justify-center min-w-[48rem]">
         <Card className="max-w-3xl w-full pb-0 mb-6">
           <CardHeader>
-            <h1 className="text-2xl font-bold pb-2">Equity Curve</h1>
-            <CardDescription>No equity data available for account: {selectedAccount}</CardDescription>
+            <div className="grid grid-cols-5">
+              <div className="col-span-4">
+                <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
+              </div>
+              <EquityBurgerMenu
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
+                onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+              />
+            </div>
+            <CardDescription>
+              No equity data available for account: {selectedAccount}
+            </CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -110,17 +127,22 @@ export function EquityCurve({ accountNo, phAccountNo, dateRange, market }: Equit
     <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
       <Card className="max-w-3xl w-full">
         <CardHeader className="pb-0">
-          <CardTitle className="text-2xl font-semibold">
-              Equity Curve
-            </CardTitle>
+          <div className="grid grid-cols-5">
+            <div className="col-span-4">
+              <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
+            </div>
+            <EquityBurgerMenu
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
+              onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+            />
+          </div>
           <CardDescription className="pb-0 pt-0">
             {`${marketNames[market] || "Global"} Market from ${format(
-              effectiveDateRange.from!,
+              dateRange.from!,
               "MMMM d, yyyy"
-            )} to ${format(
-              effectiveDateRange.to!,
-              "MMMM d, yyyy"
-            )}. The values displayed are in ${getCurrency()}.`}
+            )} to ${format(dateRange.to!, "MMMM d, yyyy")}. The values displayed are in ${getCurrency()}.`}
           </CardDescription>
         </CardHeader>
         <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
