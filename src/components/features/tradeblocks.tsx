@@ -261,6 +261,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({ initialData, initia
             </DropdownMenu>
           </div>
         </CardHeader>
+        
         <CardContent className="pt-2">
           <div className="w-full flex-grow rounded-md border p-2 mb-2">
             <Table className="min-w-0 w-full">

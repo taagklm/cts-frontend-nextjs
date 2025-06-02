@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-grow font-sans text-sm font-normal h-screen overflow-y-hidden">
+    <div className="flex flex-col flex-grow font-sans text-sm font-normal h-screen overflow-y-hidden">
       <SidebarProvider>
         <AppSidebar />
         <main className="flex-grow flex justify-center">{children}</main>
