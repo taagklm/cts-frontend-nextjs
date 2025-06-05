@@ -12,8 +12,8 @@ interface TradeAnalyticsData {
   realizedPnlPhp?: number | null;
   unrealizedPnlUsd?: number | null;
   unrealizedPnlPhp?: number | null;
-  hitRatio: number;
-  edgeRatio: number;
+  hit: number;
+  edge: number;
   totalProfit: number;
   totalLoss: number;
   numberOfWins: number;
@@ -33,8 +33,8 @@ const colMappings: Record<string, keyof TradeAnalyticsData | 'winsOverTrades'> =
   "Realized Return (PHP)": "realizedPnlPhp",
   "Unrealized Return (USD)": "unrealizedPnlUsd",
   "Unrealized Return (PHP)": "unrealizedPnlPhp",
-  "Hit (%)": "hitRatio",
-  "Edge (x)": "edgeRatio",
+  "Hit (%)": "hit",
+  "Edge (x)": "edge",
   "Winners / Trades": "winsOverTrades",
   "Total Gain": "totalProfit",
   "Total Loss": "totalLoss",

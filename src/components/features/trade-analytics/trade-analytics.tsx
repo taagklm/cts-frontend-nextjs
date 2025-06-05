@@ -40,8 +40,8 @@ interface Stats {
   realizedPnlPhp?: number | null;
   unrealizedPnlUsd?: number | null;
   unrealizedPnlPhp?: number | null;
-  hitRatio: number;
-  edgeRatio: number;
+  hit: number;
+  edge: number;
   totalProfit: number;
   totalLoss: number;
   numberOfWins: number;
@@ -364,8 +364,8 @@ export function TradeAnalytics({
       realizedPnlPhp: bundle.overallStats.stats.realizedPnlPhp,
       unrealizedPnlUsd: bundle.overallStats.stats.unrealizedPnlUsd,
       unrealizedPnlPhp: bundle.overallStats.stats.unrealizedPnlPhp,
-      hitRatio: bundle.overallStats.stats.hitRatio,
-      edgeRatio: bundle.overallStats.stats.edgeRatio,
+      hit: bundle.overallStats.stats.hit,
+      edge: bundle.overallStats.stats.edge,
       totalProfit: bundle.overallStats.stats.totalProfit,
       totalLoss: bundle.overallStats.stats.totalLoss,
       numberOfWins: bundle.overallStats.stats.numberOfWins,

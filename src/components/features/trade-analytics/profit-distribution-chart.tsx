@@ -23,8 +23,8 @@ interface TradeAnalyticsDto {
   realizedPnlPhp?: number | null;
   unrealizedPnlUsd?: number | null;
   unrealizedPnlPhp?: number | null;
-  hitRatio: number;
-  edgeRatio: number;
+  hit: number;
+  edge: number;
   totalProfit: number;
   totalLoss: number;
   numberOfWins: number;
