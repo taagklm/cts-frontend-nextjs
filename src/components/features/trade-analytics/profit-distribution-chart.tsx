@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 import {
   Card,
@@ -13,6 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import Loading from "@/components/ui/loading";
 
 interface TradeAnalyticsDto {
   numberOfTrades: number;
@@ -78,20 +80,49 @@ const formatRange = (start: number | null | undefined, end: number | null | unde
 };
 
 export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
-  console.log("ProfitDistributionChart data:", data); // Debug input data
-  console.log("ProfitDistribution array:", data?.profitDistribution); // Debug profitDistribution
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
+  const [chartData, setChartData] = useState<ChartData[]>([]); // Store transformed chart data
 
-  // Transform profit distribution data for chart
-  const chartData: ChartData[] = (data?.profitDistribution ?? []).map((bracket) => {
-    const isNegative = bracket.rangeStart != null && bracket.rangeStart < 0;
-    return {
-      range: formatRange(bracket.rangeStart, bracket.rangeEnd),
-      frequency: bracket.count ?? 0,
-      fill: isNegative ? chartConfig.frequency.color : chartConfig.positiveFrequency.color,
-    };
-  });
+  // Simulate async data fetch (replace with actual API call)
+  useEffect(() => {
+    setIsLoading(true);
+    // Example: Replace with your API call
+    setTimeout(() => {
+      const transformedData = (data?.profitDistribution ?? []).map((bracket) => {
+        const isNegative = bracket.rangeStart != null && bracket.rangeStart < 0;
+        return {
+          range: formatRange(bracket.rangeStart, bracket.rangeEnd),
+          frequency: bracket.count ?? 0,
+          fill: isNegative ? chartConfig.frequency.color : chartConfig.positiveFrequency.color,
+        };
+      });
+      setChartData(transformedData);
+      setIsLoading(false);
+    }, 1000);
+  }, [data]);
 
-  console.log("Transformed chartData:", chartData); // Debug chartData
+  // Debug loading state and data
+  useEffect(() => {
+    console.log("ProfitDistributionChart loading state:", isLoading);
+    console.log("ProfitDistributionChart data:", data);
+    console.log("ProfitDistribution array:", data?.profitDistribution);
+    console.log("Transformed chartData:", chartData);
+  }, [isLoading, data, chartData]);
+
+  if (isLoading) {
+    return (
+      <Card className="mb-3 max-w-3xl w-full overflow-visible shadow-none">
+        <CardHeader>
+          <CardTitle>Profit Distribution</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 min-h-[300px]">
+          <div className="px-4">
+            <Loading variant="table" rows={8} className="w-full" /> {/* 8 rows for ~256px height */}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Handle empty or no data case
   if (!chartData || chartData.length === 0) {
@@ -100,7 +131,7 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
         <CardHeader>
           <CardTitle>Profit Distribution</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 text-center">
+        <CardContent className="p-4 text-center min-h-[300px]">
           <p className="text-gray-500">No profit distribution data available</p>
         </CardContent>
       </Card>

@@ -1,5 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import Loading from "@/components/ui/loading"; // Assuming you have a Loading component
 
 // Define type matching TradeAnalyticsDto
 interface TradeAnalyticsData {
@@ -52,19 +56,61 @@ export function StatsTable({
   data: TradeAnalyticsData;
   selectedMarket: string;
 }) {
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
+  const [tableData, setTableData] = useState<TradeAnalyticsData | null>(null); // Store data
+
   const isPHMarket = selectedMarket === "PH";
+
+  // Simulate async data fetch (replace with actual API call)
+  useEffect(() => {
+    setIsLoading(true);
+    // Example: Replace with your API call
+    setTimeout(() => {
+      setTableData(data);
+      setIsLoading(false);
+    }, 1000);
+  }, [data, selectedMarket]);
+
+  // Debug loading state and data
+  useEffect(() => {
+    console.log("StatsTable loading state:", isLoading);
+    console.log("StatsTable data:", tableData);
+  }, [isLoading, tableData]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
+        <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
+          <CardContent className="p-0 min-h-[400px]">
+            <div className="px-2">
+              <Loading variant="table" rows={12} className="w-full" /> {/* 12 rows for ~384px height */}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!tableData) {
+    return (
+      <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
+        <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
+          <CardContent className="p-0 min-h-[400px]">
+            <div className="px-2">
+              <div className="text-red-600">No data available</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
-      {/* Retained font-sans text-sm font-normal */}
       <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-        {/* Added overflow-hidden pt-6 pb-6 to match WinnersTable/TradeblocksTable */}
         <CardContent className="p-0">
-          {/* Changed pr-2 pl-2 pt-0 pb-0 to p-0 to match WinnersTable */}
           <div className="px-2">
-            {/* Added px-2 table wrapper to match WinnersTable */}
             <Table className="min-w-0 w-full">
-              {/* Added min-w-0 w-full to match WinnersTable/TradeblocksTable */}
               <TableBody>
                 {colsNames
                   .filter((colName) => (isPHMarket ? !colName.includes("(USD)") : !colName.includes("(PHP)")))
@@ -74,15 +120,14 @@ export function StatsTable({
 
                     // Handle the computed Winners / Trades field
                     if (dataKey === "winsOverTrades") {
-                      value = `${data.numberOfWins} / ${data.numberOfTrades}`;
+                      value = `${tableData.numberOfWins} / ${tableData.numberOfTrades}`;
                     } else {
-                      value = dataKey && data[dataKey] !== undefined ? data[dataKey] : "N/A";
+                      value = dataKey && tableData[dataKey] !== undefined ? tableData[dataKey] : "N/A";
                     }
 
                     return (
                       <TableRow key={index}>
                         <TableCell className="text-sm font-normal text-left px-1 py-1">
-                          {/* Changed py-2 to px-1 py-1 to match WinnersTable/TradeblocksTable */}
                           {colName}
                         </TableCell>
                         <TableCell

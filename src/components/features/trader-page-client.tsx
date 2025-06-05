@@ -54,7 +54,7 @@ export function TraderPageClient({
 
   return (
     <div className="flex flex-col items-center min-w-[48rem] pt-14 gap-4 pb-6 px-4 font-sans text-sm font-normal">
-      <div className="fixed top-0 left-64 right-0 z-10 bg-white dark:bg-gray-900 max-w-3xl w-full mx-auto flex justify-center items-center py-6">
+      <div className="fixed top-0 left-64 right-0 z-10 bg-white dark:bg-gray-900 max-w-3xl w-full mx-auto flex justify-center items-center py-5">
         <Tabs
           value={market}
           onValueChange={handleMarketChange}

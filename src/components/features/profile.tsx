@@ -5,14 +5,14 @@ import {
   Avatar,
   AvatarImage,
   AvatarFallback,
-} from "@/components/ui/avatar"; // Use Shadcn/UI Avatar
-import { Separator } from "@/components/ui/separator"; // Use Shadcn/UI Separator
+} from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@/components/ui/tabs"; // Use Shadcn/UI Tabs
+} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,22 +30,24 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Use Shadcn/UI Select
+} from "@/components/ui/select";
 import { toast, Toaster } from "sonner";
 import React from "react";
+import Loading from "../ui/loading";
 
 export default function ProfileClient() {
   const [saving, setSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   const [user, setUser] = useState({
-    firstName: "Alex",
-    lastName: "Quinn",
-    username: "alexq",
-    email: "alex.quinn@example.com",
-    employeeNumber: "EMP-67890",
-    authorization: ["Trader"],
-    avatar: "https://github.com/shadcn.png",
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    employeeNumber: "",
+    authorization: [] as string[],
+    avatar: "",
   });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,11 +57,30 @@ export default function ProfileClient() {
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined") {
-      const savedDashboard = localStorage.getItem("preferredDashboard") || "default";
-      setPreferredDashboard(savedDashboard);
-    }
+    // Simulate async data fetch (replace with actual API call)
+    setTimeout(() => {
+      setUser({
+        firstName: "Alex",
+        lastName: "Quinn",
+        username: "alexq",
+        email: "alex.quinn@example.com",
+        employeeNumber: "EMP-67890",
+        authorization: ["Trader"],
+        avatar: "https://github.com/shadcn.png",
+      });
+      if (typeof window !== "undefined") {
+        const savedDashboard = localStorage.getItem("preferredDashboard") || "default";
+        setPreferredDashboard(savedDashboard);
+      }
+      setIsLoading(false);
+    }, 1000);
   }, []);
+
+  // Debug loading state and user data
+  useEffect(() => {
+    console.log("ProfileClient loading state:", isLoading);
+    console.log("ProfileClient user data:", user);
+  }, [isLoading, user]);
 
   const handleSave = () => {
     if (password && password !== confirmPassword) {
@@ -83,7 +104,23 @@ export default function ProfileClient() {
     }, 1000);
   };
 
-  if (!mounted) return null;
+  if (!mounted || isLoading) {
+    return (
+      <div className="flex justify-center min-h-screen px-4 sm:px-6 lg:px-8 py-4 space-y-4 no-scrollbar">
+        <div className="w-full max-w-2xl">
+          <Card className="w-full sm:w-[512px] mx-auto">
+            <CardHeader>
+              <CardTitle>Profile</CardTitle>
+              <CardDescription>Loading profile information...</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Loading variant="table" rows={6} className="w-full" /> {/* 6 rows as placeholder */}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center min-h-screen px-4 sm:px-6 lg:px-8 py-4 space-y-4 no-scrollbar">
@@ -127,69 +164,69 @@ export default function ProfileClient() {
           </TabsList>
 
           <TabsContent value="profile">
-          <Card className="w-full sm:w-[512px] mx-auto">
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Update your profile information here.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label>First Name</Label>
-                  <Input defaultValue={user.firstName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+            <Card className="w-full sm:w-[512px] mx-auto">
+              <CardHeader>
+                <CardTitle>Profile</CardTitle>
+                <CardDescription>Update your profile information here.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label>First Name</Label>
+                    <Input defaultValue={user.firstName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Last Name</Label>
+                    <Input defaultValue={user.lastName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-1">
+                    <Label>Email</Label>
+                    <Input defaultValue={user.email} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+                  </div>
+                  <div className="col-span-1 space-y-1">
+                    <Label>Employee No.</Label>
+                    <Input defaultValue={user.employeeNumber} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label>Last Name</Label>
-                  <Input defaultValue={user.lastName} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2 space-y-1">
-                  <Label>Email</Label>
-                  <Input defaultValue={user.email} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
-                </div>
-                <div className="col-span-1 space-y-1">
-                  <Label>Employee No.</Label>
-                  <Input defaultValue={user.employeeNumber} readOnly className="bg-gray-100 text-gray-500 border-none cursor-default truncate" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label>Username</Label>
-                <Input
-                  value={user.username}
-                  onChange={(e) => setUser((prev) => ({ ...prev, username: e.target.value }))}
-                  className="truncate"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label>Password</Label>
+                  <Label>Username</Label>
                   <Input
-                    type="password"
-                    placeholder="Enter new password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={user.username}
+                    onChange={(e) => setUser((prev) => ({ ...prev, username: e.target.value }))}
                     className="truncate"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label>Confirm Password</Label>
-                  <Input
-                    type="password"
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="truncate"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label>Password</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter new password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="truncate"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Confirm Password</Label>
+                    <Input
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="truncate"
+                    />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardFooter>
-          </Card>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </CardFooter>
+            </Card>
           </TabsContent>
 
           <TabsContent value="display">

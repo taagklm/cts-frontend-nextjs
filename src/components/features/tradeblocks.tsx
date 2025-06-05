@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { format, intervalToDuration } from "date-fns";
-import { ChevronDown, Eye, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil } from "lucide-react";
 import { toast } from "react-toastify";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -25,7 +27,7 @@ import {
   CardTitle,
   CardContent,
   CardDescription,
-} from "../ui/card";
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogTrigger,
@@ -43,6 +45,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import Loading from "../ui/loading";
 
 interface Tradeblock {
   id?: number;
@@ -101,7 +104,7 @@ const columns: Column[] = [
   { key: "totalValueTradedUsd", label: "Val", width: "w-12", align: "right" },
   { key: "totalValueTradedPhp", label: "V.PHP", width: "w-10", align: "right", hideMobile: true },
   { key: "holdingPeriod", label: "Hld", width: "w-10", align: "left", hideMobile: true },
-  { key: "actions", label: "Actions", width: "w-20", align: "center" },
+  { key: "actions", label: "Actions", width: "w-10", align: "center" },
 ];
 
 const defaultVisibleColumns = [
@@ -124,19 +127,17 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
   dateEnd = "2024-02-01",
   fetchTimeout = 15000,
 }) => {
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Tradeblock | null; order: "asc" | "desc" | null }>({
-    key: null,
-    order: null,
-  });
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Tradeblock | null;
+    order: "asc" | "desc" | null;
+  }>({ key: null, order: null });
   const [visibleColumns, setVisibleColumns] = useState<string[]>(defaultVisibleColumns);
-  const [currentPage, setCurrentPage] = useState(1);
   const [tradeblocksData, setTradeblocksData] = useState<Tradeblock[]>(initialData);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Always start with loading
   const [error, setError] = useState<string | null>(initialError);
-  const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(!!initialData || !!initialError);
+  const [isInitialFetchDone, setIsInitialFetchDone] = useState<boolean>(false); // Track fetch completion
   const [selectedTradeblock, setSelectedTradeblock] = useState<Tradeblock | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const pageSize = 10;
 
   const [editForm, setEditForm] = useState({
     account: "",
@@ -155,6 +156,15 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
     totalValueTradedPhp: "",
     holdingPeriod: "",
   });
+
+  // Debounce helper for button clicks
+  const debounce = (func: () => void, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(func, wait);
+    };
+  };
 
   // Load visibleColumns from localStorage
   useEffect(() => {
@@ -194,6 +204,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
   // Fetch tradeblocks data
   const fetchTradeblocks = useCallback(async () => {
     console.log("fetchTradeblocks started");
+    setIsLoading(true); // Ensure loading state is set
     const args = { account, dateStart, dateEnd };
 
     try {
@@ -219,25 +230,47 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
       console.error("Error fetching tradeblocks:", err);
       setTradeblocksData(initialData);
       setError(err instanceof Error ? err.message : "Failed to fetch tradeblocks");
+    } finally {
+      setIsLoading(false); // Clear loading state
+      setIsInitialFetchDone(true); // Mark fetch as done
     }
   }, [initialData, account, dateStart, dateEnd, fetchTimeout]);
 
   // Initial fetch
   useEffect(() => {
+    console.log("Initial fetch check:", { isInitialFetchDone, isLoading });
     if (!isInitialFetchDone) {
-      console.log("Triggering initial fetchTradeblocks");
       fetchTradeblocks();
-      setIsInitialFetchDone(true);
+    } else {
+      setIsLoading(false); // Ensure loading is false if fetch is already done
     }
   }, [fetchTradeblocks, isInitialFetchDone]);
+
+  // Debug loading state changes
+  useEffect(() => {
+    console.log("TradeblocksTable loading state:", isLoading);
+  }, [isLoading]);
 
   // Toggle column visibility
   const toggleColumn = (columnKey: string) => {
     setVisibleColumns((prev) =>
-      prev.includes(columnKey)
-        ? prev.filter((key) => key !== columnKey)
-        : [...prev, columnKey]
+      prev.includes(columnKey) ? prev.filter((key) => key !== columnKey) : [...prev, columnKey]
     );
+  };
+
+  // Reset to default columns
+  const handleResetColumns = () => {
+    setVisibleColumns(defaultVisibleColumns);
+    try {
+      localStorage.setItem("tradeblocksVisibleColumns", JSON.stringify(defaultVisibleColumns));
+    } catch (err) {
+      console.error("Failed to save default columns to localStorage:", err);
+    }
+  };
+
+  // Reset rows to default order
+  const handleResetRows = () => {
+    setSortConfig({ key: null, order: null });
   };
 
   // Handle sort
@@ -273,18 +306,6 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
     });
   }, [tradeblocksData, sortConfig]);
 
-  // Memoized pagination
-  const totalPages = Math.ceil(trades.length / pageSize);
-  const paginatedTrades = useMemo(() => {
-    return trades.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  }, [trades, currentPage, pageSize]);
-
-  // Handle view tradeblock
-  const handleViewTradeblock = (trade: Tradeblock) => {
-    setSelectedTradeblock(trade);
-    setIsViewOpen(true);
-  };
-
   // Handle edit tradeblock
   const handleEditTradeblock = (trade: Tradeblock) => {
     setSelectedTradeblock(trade);
@@ -318,7 +339,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
       assetCategory: editForm.assetCategory,
       currency: editForm.currency,
       symbol: editForm.symbol,
-      longShort: editForm.longShort,
+      longShort: editForm.longShort || undefined,
       unrealizedPnlUsd: editForm.unrealizedPnlUsd ? Number(editForm.unrealizedPnlUsd) : undefined,
       unrealizedPnlPhp: editForm.unrealizedPnlPhp ? Number(editForm.unrealizedPnlPhp) : undefined,
       totalOpenQuantity: editForm.totalOpenQuantity ? Number(editForm.totalOpenQuantity) : undefined,
@@ -337,18 +358,6 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
     setTradeblocksData(updatedTrades);
     setIsEditOpen(false);
     toast.success("Tradeblock updated successfully");
-  };
-
-  // Handle delete tradeblock
-  const handleDeleteTradeblock = (id?: number) => {
-    if (!id) return;
-    if (window.confirm(`Are you sure you want to delete tradeblock ID ${id}?`)) {
-      const updatedTrades = tradeblocksData.filter((trade) => trade.id !== id);
-      setTradeblocksData(updatedTrades);
-      const totalPagesAfterDelete = Math.ceil(updatedTrades.length / pageSize);
-      if (currentPage > totalPagesAfterDelete) setCurrentPage(totalPagesAfterDelete || 1);
-      toast.success(`Tradeblock ID ${id} deleted`);
-    }
   };
 
   // Format holding period
@@ -379,25 +388,61 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
       case "totalRealizedPnlPhp":
       case "avgEntryPrice":
       case "avgExitPrice":
-        return typeof value === "number" ? value.toFixed(2) : "N/A";
       case "totalValueTradedUsd":
       case "totalValueTradedPhp":
-        return typeof value === "number"
-          ? value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : "N/A";
+        return typeof value === "number" ? value.toFixed(2) : "N/A";
       default:
         return value as string | number;
     }
   };
 
-  if (error || !tradeblocksData) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="flex items-start justify-center font-sans text-sm font-normal w-full ml-12 max-w-[calc(100%-12rem)] min-h-0">
-        <Card className="max-w-[calc(100%-1rem)] w-full mx-2 overflow-hidden pt-4 pb-6 bg-white dark:bg-gray-900">
+      <div className="flex items-start justify-center font-sans text-sm font-normal w-full max-w-[calc(100%-16rem)] sm:max-w-[1280px]">
+        <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-4 bg-white dark:bg-gray-900">
           <CardHeader>
-            <CardTitle className="text-red-500">Error Fetching Tradeblocks</CardTitle>
-            <CardDescription className="pb-0 text-sm font-normal">{error || "No data available"}</CardDescription>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-semibold">Tradeblocks</CardTitle>
+              <Button variant="outline" disabled>
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
+          <CardContent className="pt-2">
+            <Loading variant="table" rows={6} className="w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error or no data state
+  if (error || !tradeblocksData.length) {
+    return (
+      <div className="flex items-start justify-center font-sans text-sm font-normal w-full max-w-[calc(100%-16rem)] sm:max-w-[1280px]">
+        <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-4 bg-white dark:bg-gray-900">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-semibold">Tradeblocks</CardTitle>
+              <Button variant="outline" disabled>
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="text-red-600">
+              {error || "No tradeblocks data available"}
+              {error && (
+                <button
+                  onClick={fetchTradeblocks}
+                  className="ml-2 text-blue-600 underline"
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          </CardContent>
         </Card>
       </div>
     );
@@ -416,7 +461,9 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                     Columns <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="max-h-[60vh] overflow-y-auto">
+                  <DropdownMenuItem onClick={handleResetColumns}>Reset to Default Columns</DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   {columns.map((column) => (
                     <DropdownMenuCheckboxItem
                       key={column.key}
@@ -433,7 +480,10 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
         </CardHeader>
 
         <CardContent className="pt-2">
-          <div className="w-full flex-grow rounded-md border p-2 mb-2 overflow-x-auto">
+          <div
+            className="w-full flex-grow rounded-md border p-2 mb-2 overflow-x-auto overflow-y-auto max-h-[500px]"
+            style={{ minWidth: "800px" }}
+          >
             <Table className="min-w-[800px] w-full" aria-label="Tradeblocks data table">
               <TableHeader className="sticky top-0 bg-white dark:bg-gray-900 z-10">
                 <TableRow>
@@ -459,16 +509,14 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                               className="p-0 flex items-center gap-1 justify-center w-full"
                               onClick={() => handleSort(column.key as keyof Tradeblock)}
                               aria-label={`Sort by ${column.label} in ${
-                                sortConfig.key === column.key && sortConfig.order === "asc" ? "descending" : "ascending"
+                                sortConfig.key === column.key && sortConfig.order === "asc"
+                                  ? "descending"
+                                  : "ascending"
                               } order`}
                             >
                               {column.label}
                               {sortConfig.key === column.key &&
-                                sortConfig.order === "asc"
-                                ? " ↑"
-                                : sortConfig.order === "desc"
-                                ? " ↓"
-                                : ""}
+                                (sortConfig.order === "asc" ? " ↑" : sortConfig.order === "desc" ? " ↓" : "")}
                             </Button>
                           ) : (
                             column.label
@@ -479,17 +527,17 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedTrades.length ? (
-                  paginatedTrades.map((trade) => (
-                    <TableRow key={trade.id ?? Math.random()}>
+                {trades.length ? (
+                  trades.map((trade, index) => (
+                    <TableRow key={trade.id ?? `trade-${index}`}>
                       {columns.map(
                         (column) =>
                           visibleColumns.includes(column.key) && (
                             <TableCell
                               key={column.key}
-                              className={`text-center px-1 py-1 text-xs truncate text-ellipsis overflow-hidden ${
-                                column.hideMobile ? "hidden sm:table-cell" : ""
-                              }`}
+                              className={`text-center px-1 py-0 text-xs truncate text-ellipsis overflow-hidden ${
+                                column.key === "actions" ? "" : "truncate text-ellipsis overflow-hidden"
+                              } ${column.hideMobile ? "hidden sm:table-cell" : ""}`}
                               style={{
                                 color:
                                   column.key === "totalRealizedPnlUsd"
@@ -502,54 +550,13 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                             >
                               {column.key === "actions" ? (
                                 <div className="flex gap-1 justify-center">
-                                  <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-                                    <DialogTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        title={`View Tradeblock ID ${trade.id}`}
-                                        onClick={() => handleViewTradeblock(trade)}
-                                      >
-                                        <Eye size={12} className="text-blue-500" />
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-2xl text-sm font-normal z-50">
-                                      <DialogHeader>
-                                        <DialogTitle className="text-2xl font-semibold">
-                                          Tradeblock Details: ID {selectedTradeblock?.id}
-                                        </DialogTitle>
-                                        <DialogDescription className="text-sm font-normal">
-                                          View tradeblock details below.
-                                        </DialogDescription>
-                                      </DialogHeader>
-                                      <div className="grid gap-4 py-4">
-                                        {columns
-                                          .filter((col) => col.key !== "actions")
-                                          .map((col) => (
-                                            <div key={col.key} className="grid grid-cols-2 items-center gap-2">
-                                              <span className="font-semibold">{col.label}:</span>
-                                              <span>{selectedTradeblock ? renderCellValue(selectedTradeblock, col) : "N/A"}</span>
-                                            </div>
-                                          ))}
-                                      </div>
-                                      <div className="flex justify-end">
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => setIsViewOpen(false)}
-                                          className="text-sm font-normal"
-                                        >
-                                          Close
-                                        </Button>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                  <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                                  <Dialog>
                                     <DialogTrigger asChild>
                                       <Button
                                         variant="ghost"
                                         size="icon"
                                         title={`Edit Tradeblock ID ${trade.id}`}
-                                        onClick={() => handleEditTradeblock(trade)}
+                                        onClick={debounce(() => handleEditTradeblock(trade), 200)}
                                       >
                                         <Pencil size={12} className="text-green-500" />
                                       </Button>
@@ -574,9 +581,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                           <Input
                                             id="edit-account"
                                             value={editForm.account}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, account: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, account: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -587,9 +592,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                           <Input
                                             id="edit-assetCategory"
                                             value={editForm.assetCategory}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, assetCategory: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, assetCategory: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -600,9 +603,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                           <Input
                                             id="edit-currency"
                                             value={editForm.currency}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, currency: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, currency: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -613,9 +614,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                           <Input
                                             id="edit-symbol"
                                             value={editForm.symbol}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, symbol: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, symbol: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -625,14 +624,9 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                           </Label>
                                           <Select
                                             value={editForm.longShort}
-                                            onValueChange={(value) =>
-                                              setEditForm((prev) => ({ ...prev, longShort: value }))
-                                            }
+                                            onValueChange={(value) => setEditForm((prev) => ({ ...prev, longShort: value }))}
                                           >
-                                            <SelectTrigger
-                                              id="edit-longShort"
-                                              className="col-span-3 text-sm font-normal"
-                                            >
+                                            <SelectTrigger id="edit-longShort" className="col-span-3 text-sm font-normal">
                                               <SelectValue placeholder="Select Long/Short" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -649,9 +643,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-unrealizedPnlUsd"
                                             type="number"
                                             value={editForm.unrealizedPnlUsd}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, unrealizedPnlUsd: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, unrealizedPnlUsd: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -663,9 +655,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-unrealizedPnlPhp"
                                             type="number"
                                             value={editForm.unrealizedPnlPhp}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, unrealizedPnlPhp: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, unrealizedPnlPhp: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -677,9 +667,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-totalOpenQuantity"
                                             type="number"
                                             value={editForm.totalOpenQuantity}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, totalOpenQuantity: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, totalOpenQuantity: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -691,9 +679,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-totalRealizedPnlUsd"
                                             type="number"
                                             value={editForm.totalRealizedPnlUsd}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, totalRealizedPnlUsd: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, totalRealizedPnlUsd: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -705,9 +691,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-totalRealizedPnlPhp"
                                             type="number"
                                             value={editForm.totalRealizedPnlPhp}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, totalRealizedPnlPhp: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, totalRealizedPnlPhp: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -719,9 +703,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-avgEntryPrice"
                                             type="number"
                                             value={editForm.avgEntryPrice}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, avgEntryPrice: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, avgEntryPrice: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -733,9 +715,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-avgExitPrice"
                                             type="number"
                                             value={editForm.avgExitPrice}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, avgExitPrice: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, avgExitPrice: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -747,9 +727,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-totalValueTradedUsd"
                                             type="number"
                                             value={editForm.totalValueTradedUsd}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, totalValueTradedUsd: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, totalValueTradedUsd: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -761,9 +739,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-totalValueTradedPhp"
                                             type="number"
                                             value={editForm.totalValueTradedPhp}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, totalValueTradedPhp: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, totalValueTradedPhp: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -775,9 +751,7 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                             id="edit-holdingPeriod"
                                             type="number"
                                             value={editForm.holdingPeriod}
-                                            onChange={(e) =>
-                                              setEditForm((prev) => ({ ...prev, holdingPeriod: e.target.value }))
-                                            }
+                                            onChange={(e) => setEditForm((prev) => ({ ...prev, holdingPeriod: e.target.value }))}
                                             className="col-span-3 text-sm font-normal"
                                           />
                                         </div>
@@ -790,23 +764,12 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                                         >
                                           Cancel
                                         </Button>
-                                        <Button
-                                          onClick={handleEditSubmit}
-                                          className="text-sm font-normal"
-                                        >
+                                        <Button onClick={handleEditSubmit} className="text-sm font-normal">
                                           Save
                                         </Button>
                                       </div>
                                     </DialogContent>
                                   </Dialog>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteTradeblock(trade.id)}
-                                    title={`Delete Tradeblock ID ${trade.id}`}
-                                  >
-                                    <Trash2 size={12} className="text-red-500" />
-                                  </Button>
                                 </div>
                               ) : (
                                 renderCellValue(trade, column)
@@ -825,26 +788,6 @@ const TradeblocksTable: React.FC<TradeblocksTableProps> = ({
                 )}
               </TableBody>
             </Table>
-          </div>
-          <div className="flex items-center justify-end space-x-2 py-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              aria-label="Go to previous page"
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              aria-label="Go to next page"
-            >
-              Next
-            </Button>
           </div>
         </CardContent>
       </Card>

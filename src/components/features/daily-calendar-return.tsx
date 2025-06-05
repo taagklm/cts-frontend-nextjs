@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parse } from "date-fns";
+import Loading from "../ui/loading";
 
 // Define interfaces
 interface DailyPnl {
@@ -42,7 +43,7 @@ interface DayContentProps {
 
 interface TradeCalendarProps {
   accountNo: string;
-  phAccountNo: string;
+  phAccountNo: string; // Fixed typo from phAccount
   market: string;
 }
 
@@ -213,7 +214,7 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
     );
 
     const summaryCards = weekSummaries.map((summary, index) => {
-      const topPosition = calendarTopPadding + dayHeaderHeight + index * rowHeight + 8; // Increased offset
+      const topPosition = calendarTopPadding + dayHeaderHeight + index * rowHeight + 8;
       console.log("Summary card position:", { index, topPosition });
       return (
         <div
@@ -239,15 +240,45 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
   };
 
   // Early returns AFTER all hooks
-  if (loading) return <div>Loading...</div>;
-  if (error) return (
-    <div>
-      Error: {error}
-      <button onClick={fetchDailyPnl} className="ml-2 text-blue-600 underline">
-        Retry
-      </button>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">
+        <Card className="max-w-3xl w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl">Daily Calendar Return</CardTitle>
+            <CardDescription>
+              Displays daily trade performance and weekly summaries for the selected month.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Loading variant="calendar" className="w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">
+        <Card className="max-w-3xl w-full">
+          <CardHeader>
+            <CardTitle className="text-2xl">Daily Calendar Return</CardTitle>
+            <CardDescription>
+              Displays daily trade performance and weekly summaries for the selected month.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-red-600">
+              Error: {error}
+              <button onClick={fetchDailyPnl} className="ml-2 text-blue-600 underline">
+                Retry
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">

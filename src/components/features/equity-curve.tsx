@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardHeader, CardDescription, CardContent, CardTitle } from "../ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
@@ -8,7 +8,7 @@ import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
 import { EquityBurgerMenu } from "./equity-curve/equity-burger-menu";
-
+import Loading from "../ui/loading";
 
 interface DailyPnlEntry {
   date: string;
@@ -54,6 +54,8 @@ export function EquityCurve({
     from: startOfYear(today),
     to: today,
   });
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
+  const [accountData, setAccountData] = useState<DailyPnlData | null>(null); // Store data
 
   // Use propDateRange if valid, else localDateRange
   const dateRange = propDateRange?.from && propDateRange?.to ? propDateRange : localDateRange;
@@ -78,11 +80,80 @@ export function EquityCurve({
 
   const selectedAccount = market === "PH" && phAccountNo ? phAccountNo : accountNo;
 
-  const accountData = mockIbkrDailyPnl.find((data) => data.account === selectedAccount) || {
-    account: selectedAccount,
-    currency: getCurrency(),
-    dailyPnl: [],
-  };
+  // Simulate async data fetch (replace with actual API call)
+  useEffect(() => {
+    setIsLoading(true);
+    // Example: Replace with your API call
+    setTimeout(() => {
+      const fetchedData = mockIbkrDailyPnl.find((data) => data.account === selectedAccount) || {
+        account: selectedAccount,
+        currency: getCurrency(),
+        dailyPnl: [],
+      };
+      setAccountData(fetchedData);
+      setIsLoading(false);
+    }, 1000);
+  }, [selectedAccount]);
+
+  // Debug loading state and data
+  useEffect(() => {
+    console.log("EquityCurve loading state:", isLoading);
+    console.log("EquityCurve accountData:", accountData);
+  }, [isLoading, accountData]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
+        <Card className="max-w-3xl w-full">
+          <CardHeader className="pb-0">
+            <div className="grid grid-cols-5">
+              <div className="col-span-4">
+                <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
+              </div>
+              <EquityBurgerMenu
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
+                onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+                disabled // Disable menu during loading
+              />
+            </div>
+            <CardDescription className="pb-0 pt-0">
+              Loading equity data for account: {selectedAccount}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
+            <Loading variant="table" rows={6} className="w-full" /> {/* 6 rows as placeholder */}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!accountData || accountData.dailyPnl.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-w-[48rem]">
+        <Card className="max-w-3xl w-full pb-0 mb-6">
+          <CardHeader>
+            <div className="grid grid-cols-5">
+              <div className="col-span-4">
+                <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
+              </div>
+              <EquityBurgerMenu
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
+                onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+              />
+            </div>
+            <CardDescription>
+              No equity data available for account: {selectedAccount}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   const filteredDailyPnl = dateRange.from && dateRange.to
     ? accountData.dailyPnl.filter((entry) => {

@@ -10,7 +10,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Page() {
   return (
-    <div className="w-full max-w-[1280px] mx-auto sm:p-6">
+    <div className="w-full max-w-[1280px] mx-auto">
       <Card className="border-none shadow-none">
         <div className="px-12 pt-0">
           <ProfileClient />

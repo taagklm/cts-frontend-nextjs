@@ -7,7 +7,6 @@ import {
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   Column,
@@ -19,6 +18,8 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Loading from "../ui/loading";
 
 export type TradersPerformanceTableData = {
   trader: string;
@@ -83,10 +85,10 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
       <Button
         variant="ghost"
-        className="p-0 w-full justify-center"
+        className="p-0 w-full justify-end"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        IB PNL YTD (USD)
+        IB YTD
         {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
       </Button>
     ),
@@ -101,7 +103,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
           }).format(value)
         : "N/A";
       return (
-        <div className="text-center" style={{ color }}>
+        <div className="text-right" style={{ color }}>
           {formattedValue}
         </div>
       );
@@ -141,10 +143,10 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
     header: ({ column }: { column: Column<TradersPerformanceTableData> }) => (
       <Button
         variant="ghost"
-        className="p-0 w-full justify-center"
+        className="p-0 w-full justify-end"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        PH PNL YTD (PHP)
+        PH YTD
         {column.getIsSorted() === "asc" ? " ↑" : column.getIsSorted() === "desc" ? " ↓" : ""}
       </Button>
     ),
@@ -159,7 +161,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
           }).format(value)
         : "N/A";
       return (
-        <div className="text-center" style={{ color }}>
+        <div className="text-right" style={{ color }}>
           {formattedValue}
         </div>
       );
@@ -275,39 +277,69 @@ interface TradersPerformanceTableProps {
 export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [isLoading, setIsLoading] = React.useState(true); // Added loading state
+  const [tableData, setTableData] = React.useState<TradersPerformanceTableData[]>([]); // Store data
+
+  // Simulate async data fetch (replace with actual API call)
+  React.useEffect(() => {
+    setIsLoading(true);
+    // Example: Replace with your API call
+    setTimeout(() => {
+      setTableData(data);
+      setIsLoading(false);
+    }, 1000);
+  }, [data]);
 
   const table = useReactTable({
-    data,
+    data: tableData,
     columns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
     state: {
       sorting,
       columnVisibility,
     },
   });
 
+  if (isLoading) {
+    return (
+      <div className="flex items-start justify-center font-sans text-sm font-normal w-full max-w-[calc(100%-16rem)] sm:max-w-[1280px]">
+        <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-4 bg-white dark:bg-gray-900">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-semibold">Traders' PNL</CardTitle>
+              <Button variant="outline" disabled>
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Loading variant="table" rows={6} className="w-full" /> {/* 6 rows: 1 header + 5 data */}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-start justify-center font-sans text-sm font-normal w-full max-w-[calc(100%-16rem)] sm:max-w-[1280px]">
       <Card className="sm:max-w-6xl max-w-full w-full mx-2 overflow-hidden pt-6 pb-4 bg-white dark:bg-gray-900">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-semibold">Traders</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Traders' PNL</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   Columns <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="max-h-[60vh] overflow-y-auto">
+                <DropdownMenuItem onClick={() => table.toggleAllColumnsVisible(true)}>
+                  Reset to Default
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {table
                   .getAllColumns()
                   .filter((column) => column.getCanHide())
@@ -326,7 +358,7 @@ export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) 
         </CardHeader>
 
         <CardContent>
-          <div className="w-full flex-grow rounded-md border pr-2 pl-2 pt-0 pb-2 mb-2">
+          <div className="w-full flex-grow rounded-md border pr-2 pl-2 pt-0 pb-2 mb-2 max-h-[500px] overflow-y-auto">
             <Table className="min-w-0 w-full">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -368,26 +400,7 @@ export function TradersPerformanceTable({ data }: TradersPerformanceTableProps) 
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center justify-end space-x-2 py-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
         </CardContent>
-
       </Card>
     </div>
   );

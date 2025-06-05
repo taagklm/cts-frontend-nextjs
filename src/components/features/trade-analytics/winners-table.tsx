@@ -1,11 +1,21 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import Loading from "@/components/ui/loading";
 
 interface TradeblockPerformance {
   dateEntered: string;
   symbol: string;
   totalReturn: number;
 }
+
+// Helper function to truncate symbol to 12 characters + "..." (total 15 characters)
+const truncateSymbol = (symbol: string, maxLength: number = 12): string => {
+  if (symbol.length <= maxLength) return symbol;
+  return `${symbol.slice(0, maxLength)}...`;
+};
 
 export function WinnersTable({
   winners,
@@ -14,28 +24,51 @@ export function WinnersTable({
   winners: TradeblockPerformance[];
   selectedMarket: string;
 }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [tableData, setTableData] = useState<TradeblockPerformance[]>([]);
+
   const formatter = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
 
-  // Limit to 5 winners, pad with empty rows if less than 5
-  const displayedWinners = winners.slice(0, 5);
+  useEffect(() => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setTableData(winners);
+      setIsLoading(false);
+    }, 1000);
+  }, [winners, selectedMarket]);
+
+  useEffect(() => {
+    console.log("WinnersTable loading state:", isLoading);
+  }, [isLoading]);
+
+  const displayedWinners = tableData.slice(0, 5);
   const rows = Array.from({ length: 5 }, (_, index) =>
     index < displayedWinners.length ? displayedWinners[index] : null
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center font-sans text-sm font-normal pb-0">
+        <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
+          <CardContent className="p-0">
+            <div className="px-2">
+              <Loading variant="table" rows={6} className="w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-center font-sans text-sm font-normal pb-0">
-      {/* Retained font-sans text-sm font-normal from previous updates */}
       <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-        {/* Changed overflow-visible to overflow-hidden, added pt-6 pb-6 to match TradeblocksTable */}
         <CardContent className="p-0">
-          {/* Changed pr-2 pl-2 pt-0 pb-0 to p-0 to match TradeblocksTable’s CardContent */}
           <div className="px-2">
-            {/* Added table wrapper with p-2 border rounded-md mt-2 mb-2 to match TradeblocksTable */}
             <Table className="min-w-0 w-full">
-              {/* Added min-w-0 w-full to match TradeblocksTable */}
               <TableBody>
                 <TableRow>
                   <TableCell
@@ -48,7 +81,6 @@ export function WinnersTable({
                 {rows.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell className="text-sm font-normal text-left px-1 py-1">
-                      {/* Changed py-2 to px-1 py-1 to match TradeblocksTable */}
                       {item
                         ? new Date(item.dateEntered).toLocaleDateString("en-US", {
                             month: "short",
@@ -57,9 +89,12 @@ export function WinnersTable({
                           })
                         : "N/A"}
                     </TableCell>
-                    <TableCell className="text-sm font-normal text-left px-1 py-1">
-                      {/* Changed py-2 to px-1 py-1, kept text-sm font-normal */}
-                      {item ? item.symbol : ""}
+                    <TableCell
+                      className={`text-sm font-normal px-1 py-1 ${
+                        item && item.symbol.length === 4 ? "text-center" : "text-left"
+                      }`}
+                    >
+                      {item ? truncateSymbol(item.symbol) : ""}
                     </TableCell>
                     <TableCell
                       className={`text-sm font-normal text-right px-1 py-1 ${
