@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { isAfter } from "date-fns";
 import { DatePickerWithRange } from "../trade-analytics/burger-menu/date-picker";
+
 function normalizeDateToUTC(date: Date): Date {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 }
@@ -24,6 +25,7 @@ export function EquityRange({
   const [isFromValid, setIsFromValid] = React.useState(true);
   const [isToValid, setIsToValid] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const today = normalizeDateToUTC(new Date());
 
   React.useEffect(() => {
     if (fromDate && toDate && !isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
@@ -34,6 +36,8 @@ export function EquityRange({
         return;
       }
       setError(null);
+      setIsFromValid(true); // Explicitly set valid when range is valid
+      setIsToValid(true);
       const newDateRange: DateRange = { from: fromDate, to: toDate };
       setDateRange(newDateRange);
       console.log("EquityRange: Date range updated", {
@@ -42,6 +46,8 @@ export function EquityRange({
       });
     } else {
       setDateRange(undefined);
+      setIsFromValid(!!fromDate && !isNaN(fromDate.getTime())); // Update validity based on date presence
+      setIsToValid(!!toDate && !isNaN(toDate.getTime()));
       console.log("EquityRange: Date range set to undefined", { fromDate, toDate });
     }
   }, [fromDate, toDate, setDateRange]);
@@ -66,13 +72,12 @@ export function EquityRange({
     (e: React.MouseEvent) => {
       e.stopPropagation();
       console.log("EquityRange: handleApplyFilters:", { fromDate, toDate, isFromValid, isToValid });
-      if (!isFromValid || !isToValid) {
-        console.log("EquityRange: Apply Filters blocked due to invalid date");
-        window.alert("Please select valid dates.");
-        return;
-      }
-      if (!isDateRangeComplete()) {
-        console.log("EquityRange: Apply Filters blocked due to incomplete date range");
+      if (!isFromValid || !isToValid || !isDateRangeComplete()) {
+        console.log("EquityRange: Apply Filters blocked", {
+          isFromValid,
+          isToValid,
+          isDateRangeComplete: isDateRangeComplete(),
+        });
         window.alert("Please select a valid date range.");
         return;
       }
@@ -84,7 +89,7 @@ export function EquityRange({
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-4">
-        <div>a
+        <div>
           <Label className="text-gray-900 dark:text-gray-100 pb-2">From:</Label>
           <DatePickerWithRange
             date={fromDate}

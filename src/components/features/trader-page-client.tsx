@@ -41,16 +41,19 @@ export function TraderPageClient({
     initialData: initialData ? JSON.stringify(initialData, null, 2) : null,
   });
 
-  const handleMarketChange = useCallback((newMarket: string) => {
-    console.log("Market changed to:", {
-      market: newMarket,
-      displayedDateRange: {
-        from: stableDateRange?.from?.toISOString(),
-        to: stableDateRange?.to?.toISOString(),
-      },
-    });
-    setMarket(newMarket);
-  }, [stableDateRange]);
+  const handleMarketChange = useCallback(
+    (newMarket: string) => {
+      console.log("Market changed to:", {
+        market: newMarket,
+        displayedDateRange: {
+          from: stableDateRange?.from?.toISOString(),
+          to: stableDateRange?.to?.toISOString(),
+        },
+      });
+      setMarket(newMarket);
+    },
+    [stableDateRange]
+  );
 
   return (
     <div className="flex flex-col items-center min-w-[48rem] pt-14 gap-4 pb-6 px-4 font-sans text-sm font-normal">
@@ -83,6 +86,8 @@ export function TraderPageClient({
         accountNo={accountNo}
         phAccountNo={phAccountNo}
         market={market}
+        dateRange={stableDateRange}
+        setDateRange={setDateRange}
       />
       <TradeCalendar
         accountNo={accountNo}
