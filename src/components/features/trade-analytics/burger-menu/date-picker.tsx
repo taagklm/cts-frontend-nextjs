@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -13,7 +12,6 @@ function normalizeDateToUTC(date: Date): Date {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 }
 
-// Get number of days in a month, accounting for leap years
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -44,7 +42,6 @@ export function DatePickerWithRange({
   const [hasSelectedMonth, setHasSelectedMonth] = React.useState(false);
   const [hasSelectedDay, setHasSelectedDay] = React.useState(false);
 
-  // Generate years, months, and days for dropdowns
   const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => currentYear - i);
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -73,6 +70,8 @@ export function DatePickerWithRange({
       setHasSelectedMonth(true);
       setHasSelectedDay(true);
       setHasSelected(true);
+      setLocalError(null);
+      setIsValid?.(true); // Set valid when date is updated
     } else {
       console.log(`DatePickerWithRange (${mode}): Date Invalid or Undefined:`, { date });
       setYear(undefined);
@@ -82,20 +81,10 @@ export function DatePickerWithRange({
       setHasSelectedMonth(false);
       setHasSelectedDay(false);
       setHasSelected(false);
-      setLocalError(null); // Clear error when date is reset
+      setLocalError(null);
+      setIsValid?.(false); // Set invalid when date is reset
     }
-  }, [date, mode]);
-
-  React.useEffect(() => {
-    const isValid = !localError && hasSelected && !!date && !isNaN(date.getTime());
-    setIsValid?.(isValid);
-    console.log(`DatePickerWithRange (${mode}): Validity updated:`, {
-      isValid,
-      localError,
-      hasSelected,
-      date: date?.toISOString(),
-    });
-  }, [localError, hasSelected, date, mode, setIsValid]);
+  }, [date, mode, setIsValid]);
 
   const handleSelect = React.useCallback(
     (selectedYear: number, selectedMonth: number, selectedDay: number) => {
@@ -114,6 +103,7 @@ export function DatePickerWithRange({
         setError?.("Please select a complete date");
         setHasSelected(false);
         setDate(undefined);
+        setIsValid?.(false);
         console.log(`DatePickerWithRange (${mode}): Incomplete date selected`, {
           finalYear,
           finalMonth,
@@ -127,20 +117,13 @@ export function DatePickerWithRange({
         setError?.("Please select a valid date");
         setHasSelected(false);
         setDate(undefined);
+        setIsValid?.(false);
         console.log(`DatePickerWithRange (${mode}): Invalid date selected`);
         return;
       }
 
       const normalizedDate = normalizeDateToUTC(new Date(finalYear, finalMonth, finalDay));
-      if (normalizedDate > today) {
-        setLocalError("Date cannot be in the future");
-        setError?.("Date cannot be in the future");
-        setHasSelected(false);
-        setDate(undefined);
-        console.log(`DatePickerWithRange (${mode}): Future date selected`, { normalizedDate });
-        return;
-      }
-
+      // Restore original future date check (handled in Select components, not here)
       setLocalError(null);
       setError?.(null);
       setHasSelected(true);
@@ -148,11 +131,12 @@ export function DatePickerWithRange({
       setYear(finalYear.toString());
       setMonth(finalMonth.toString());
       setDay(finalDay.toString());
+      setIsValid?.(true); // Explicitly set valid for complete dates
       console.log(`DatePickerWithRange (${mode}): Date selected`, {
         normalizedDate: normalizedDate.toISOString(),
       });
     },
-    [mode, setError, setDate, today, year, month, day, hasSelectedYear, hasSelectedMonth, hasSelectedDay]
+    [mode, setError, setDate, year, month, day, hasSelectedYear, hasSelectedMonth, hasSelectedDay, setIsValid]
   );
 
   return (

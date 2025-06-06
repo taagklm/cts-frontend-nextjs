@@ -34,7 +34,6 @@ export function Range({
   const [error, setError] = React.useState<string | null>(null);
   const today = normalizeDateToUTC(new Date());
 
-  // List of trading strategies (non-functional, for display only)
   const strategies = [
     "Bluesky",
     "Capitulation",
@@ -53,7 +52,6 @@ export function Range({
     "Reversal",
   ].sort((a, b) => a.localeCompare(b));
 
-  // Sync dateRange with fromDate and toDate
   React.useEffect(() => {
     if (fromDate && toDate && !isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
       if (isAfter(fromDate, toDate)) {
@@ -63,6 +61,8 @@ export function Range({
         return;
       }
       setError(null);
+      setIsFromValid(true);
+      setIsToValid(true);
       const newDateRange: DateRange = { from: fromDate, to: toDate };
       setDateRange(newDateRange);
       console.log("Range: Date range updated", {
@@ -71,11 +71,12 @@ export function Range({
       });
     } else {
       setDateRange(undefined);
+      setIsFromValid(!!fromDate && !isNaN(fromDate.getTime()));
+      setIsToValid(!!toDate && !isNaN(toDate.getTime()));
       console.log("Range: Date range set to undefined", { fromDate, toDate });
     }
   }, [fromDate, toDate, setDateRange]);
 
-  // Non-functional strategy handlers (for UI only)
   const handleStrategyChange = (strategy: string) => {
     let updatedStrategies: string[];
     if (strategy === "None") {
@@ -100,35 +101,25 @@ export function Range({
     console.log("Range: handleUnselectAll");
   };
 
-  // Validate date range
   const isDateRangeComplete = () => {
     if (!fromDate || !toDate) {
-      console.log("Range: Date range incomplete", { fromDate, toDate });
       return false;
     }
     if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-      console.log("Range: Invalid date objects", { fromDate, toDate });
       return false;
     }
     if (isAfter(fromDate, toDate)) {
-      console.log("Range: Invalid range (To before From)", { fromDate, toDate });
       return false;
     }
     return true;
   };
 
-  // Handle "Apply Filters" button click
   const handleApplyFiltersClick = React.useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       console.log("Range: handleApplyFilters:", { fromDate, toDate, isFromValid, isToValid });
-      if (!isFromValid || !isToValid) {
-        console.log("Range: Apply Filters blocked due to invalid date");
-        window.alert("Please select valid dates.");
-        return;
-      }
-      if (!isDateRangeComplete()) {
-        console.log("Range: Apply Filters blocked due to incomplete date range");
+      if (!isFromValid || !isToValid || !isDateRangeComplete()) {
+        console.log("Range: Apply Filters blocked", { isFromValid, isToValid, isDateRangeComplete: isDateRangeComplete() });
         window.alert("Please select a valid date range.");
         return;
       }
