@@ -8,7 +8,7 @@ import { Card, CardHeader, CardDescription, CardContent, CardTitle } from "../ui
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
 import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { mockIbkrDailyPnl } from "@/mock-data/daily-pnl";
+import { mockData } from "@/mock-data/daily-pnl";
 import { EquityBurgerMenu } from "./equity-curve/equity-burger-menu";
 import Loading from "../ui/loading";
 
@@ -87,7 +87,7 @@ export function EquityCurve({
     setIsLoading(true);
     // Example: Replace with your API call
     setTimeout(() => {
-      const fetchedData = mockIbkrDailyPnl.find((data) => data.account === selectedAccount) || {
+      const fetchedData = mockData.find((data) => data.account === selectedAccount) || {
         account: selectedAccount,
         currency: getCurrency(),
         dailyPnl: [],
