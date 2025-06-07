@@ -117,6 +117,9 @@ export async function POST(request: Request) {
         { status: response.status }
       );
     }
+
+    // Log successful response and return result
+    console.log("Successfully fetched trade analytics:", { status: response.status, body: result });
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error in trade-analytics route:", {
