@@ -50,13 +50,13 @@ export default async function Page({
   const dateStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1)).toISOString().split("T")[0]; // 2025-05-01
   const dateEnd = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())).toISOString().split("T")[0]; // 2025-05-29
 
-  console.log("Server: Fetching analytics data", {
-    trader,
-    accountNo,
-    dateStart,
-    dateEnd,
-    timestamp: new Date().toISOString(),
-  });
+  // console.log("Server: Fetching analytics data", {
+  //   trader,
+  //   accountNo,
+  //   dateStart,
+  //   dateEnd,
+  //   timestamp: new Date().toISOString(),
+  // });
 
   try {
     const controller = new AbortController();
@@ -77,16 +77,16 @@ export default async function Page({
 
     if (response.ok) {
       analyticsData = await response.json();
-      console.log("Server: API Response", JSON.stringify(analyticsData, null, 2));
+      // console.log("Server: API Response", JSON.stringify(analyticsData, null, 2));
     } else {
       error = (await response.json()).error || "Failed to fetch trade analytics";
       analyticsData = analyticsMockData; // Fallback to mock data
-      console.log("Server: API Error", { error });
+      // console.log("Server: API Error", { error });
     }
   } catch (err) {
     error = err instanceof Error ? err.message : "Network error";
     analyticsData = analyticsMockData; // Fallback to mock data
-    console.log("Server: Fetch Error", { error });
+    // console.log("Server: Fetch Error", { error });
   }
 
   const displayedDateRange: DateRange = {
@@ -94,18 +94,18 @@ export default async function Page({
     to: new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())),
   };
 
-  console.log("Server: Passing props to TraderPageClient", {
-    trader: decodedTrader,
-    accountNo,
-    phAccountNo: phAccountNoValue,
-    initialData: analyticsData ? JSON.stringify(analyticsData, null, 2) : null,
-    initialError: error,
-    displayedDateRange: {
-      from: displayedDateRange.from?.toISOString(),
-      to: displayedDateRange.to?.toISOString(),
-    },
-    displayedMarket: "IB",
-  });
+  // console.log("Server: Passing props to TraderPageClient", {
+  //   trader: decodedTrader,
+  //   accountNo,
+  //   phAccountNo: phAccountNoValue,
+  //   initialData: analyticsData ? JSON.stringify(analyticsData, null, 2) : null,
+  //   initialError: error,
+  //   displayedDateRange: {
+  //     from: displayedDateRange.from?.toISOString(),
+  //     to: displayedDateRange.to?.toISOString(),
+  //   },
+  //   displayedMarket: "IB",
+  // });
 
   return (
     <TraderPageClient

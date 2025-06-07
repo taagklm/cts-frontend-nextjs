@@ -71,11 +71,11 @@ export function StatsTable({
     }, 1000);
   }, [data, selectedMarket]);
 
-  // Debug loading state and data
-  useEffect(() => {
-    console.log("StatsTable loading state:", isLoading);
-    console.log("StatsTable data:", tableData);
-  }, [isLoading, tableData]);
+  // // Debug loading state and data
+  // useEffect(() => {
+  //   console.log("StatsTable loading state:", isLoading);
+  //   console.log("StatsTable data:", tableData);
+  // }, [isLoading, tableData]);
 
   if (isLoading) {
     return (

@@ -73,7 +73,7 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
         dateStart,
         dateEnd,
       };
-      console.log("Fetching daily PnL with body:", requestBody);
+      // console.log("Fetching daily PnL with body:", requestBody);
 
       const response = await fetch("/api/dailypnl", {
         method: "POST",
@@ -89,7 +89,7 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
       }
 
       const data: AccountPnl[] = await response.json();
-      console.log("Received data for account:", requestBody.account, data);
+      // console.log("Received data for account:", requestBody.account, data);
 
       if (!data.length) {
         setError(`No data found for account ${requestBody.account}`);
@@ -119,7 +119,7 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
       const aggregatedData = Array.from(dateMap.values()).sort(
         (a, b) => a.date.getTime() - b.date.getTime()
       );
-      console.log("Aggregated trade data:", aggregatedData);
+      // console.log("Aggregated trade data:", aggregatedData);
       setTradeData(aggregatedData);
     } catch (err: any) {
       console.error("Fetch error:", err);
@@ -215,7 +215,6 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
 
     const summaryCards = weekSummaries.map((summary, index) => {
       const topPosition = calendarTopPadding + dayHeaderHeight + index * rowHeight + 8;
-      console.log("Summary card position:", { index, topPosition });
       return (
         <div
           key={`week-${index}`}

@@ -15,7 +15,7 @@ interface TradeblockPerformance {
 const truncateSymbol = (symbol: string, maxLength: number = 12): string => {
   if (symbol.length <= maxLength) return symbol;
   const truncated = `${symbol.slice(0, maxLength)}...`;
-  console.log(`truncateSymbol: Input="${symbol}", Output="${truncated}"`);
+  // console.log(`truncateSymbol: Input="${symbol}", Output="${truncated}"`);
   return truncated;
 };
 
@@ -44,23 +44,23 @@ export function LosersTable({
     }, 1000);
   }, [losers, selectedMarket]);
 
-  // Debug loading state and alignment
-  useEffect(() => {
-    console.log("LosersTable loading state:", isLoading);
-    console.log("LosersTable data:", tableData);
-    if (!isLoading) {
-      const card = document.querySelector(".losers-card");
-      if (card) {
-        const rect = card.getBoundingClientRect();
-        console.log("LosersTable card alignment:", {
-          width: rect.width,
-          left: rect.left,
-          right: rect.right,
-          parentWidth: card.parentElement?.offsetWidth,
-        });
-      }
-    }
-  }, [isLoading, tableData]);
+  // // Debug loading state and alignment
+  // useEffect(() => {
+  //   console.log("LosersTable loading state:", isLoading);
+  //   console.log("LosersTable data:", tableData);
+  //   if (!isLoading) {
+  //     const card = document.querySelector(".losers-card");
+  //     if (card) {
+  //       const rect = card.getBoundingClientRect();
+  //       console.log("LosersTable card alignment:", {
+  //         width: rect.width,
+  //         left: rect.left,
+  //         right: rect.right,
+  //         parentWidth: card.parentElement?.offsetWidth,
+  //       });
+  //     }
+  //   }
+  // }, [isLoading, tableData]);
 
   // Limit to 5 losers, pad with empty rows if less than 5
   const displayedLosers = tableData.slice(0, 5);

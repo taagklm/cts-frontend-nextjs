@@ -40,9 +40,10 @@ export function WinnersTable({
     }, 1000);
   }, [winners, selectedMarket]);
 
-  useEffect(() => {
-    console.log("WinnersTable loading state:", isLoading);
-  }, [isLoading]);
+  // // Debug
+  // useEffect(() => {
+  //   console.log("WinnersTable loading state:", isLoading);
+  // }, [isLoading]);
 
   const displayedWinners = tableData.slice(0, 5);
   const rows = Array.from({ length: 5 }, (_, index) =>

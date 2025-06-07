@@ -101,13 +101,13 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
     }, 1000);
   }, [data]);
 
-  // Debug loading state and data
-  useEffect(() => {
-    console.log("ProfitDistributionChart loading state:", isLoading);
-    console.log("ProfitDistributionChart data:", data);
-    console.log("ProfitDistribution array:", data?.profitDistribution);
-    console.log("Transformed chartData:", chartData);
-  }, [isLoading, data, chartData]);
+  // // Debug loading state and data
+  // useEffect(() => {
+  //   console.log("ProfitDistributionChart loading state:", isLoading);
+  //   console.log("ProfitDistributionChart data:", data);
+  //   console.log("ProfitDistribution array:", data?.profitDistribution);
+  //   console.log("Transformed chartData:", chartData);
+  // }, [isLoading, data, chartData]);
 
   if (isLoading) {
     return (
