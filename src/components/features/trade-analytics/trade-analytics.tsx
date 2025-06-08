@@ -110,18 +110,18 @@ export function TradeAnalytics({
   const [isFetching, setIsFetching] = useState(false);
   const [lastFetchedRange, setLastFetchedRange] = useState<{ dateStart: string; dateEnd: string } | null>(null);
 
-  console.log("TradeAnalytics: Initializing", {
-    initialData: initialData ? JSON.stringify(initialData, null, 2) : null,
-    initialDateRange,
-    from: initialDateRange.from?.toISOString(),
-    to: initialDateRange.to?.toISOString(),
-    displayedDateRange,
-    fromDisplayed: displayedDateRange?.from?.toISOString(),
-    toDisplayed: displayedDateRange?.to?.toISOString(),
-    filtersApplied,
-    isMounted,
-    lastFetchedRange,
-  });
+  // console.log("TradeAnalytics: Initializing", {
+  //   initialData: initialData ? JSON.stringify(initialData, null, 2) : null,
+  //   initialDateRange,
+  //   from: initialDateRange.from?.toISOString(),
+  //   to: initialDateRange.to?.toISOString(),
+  //   displayedDateRange,
+  //   fromDisplayed: displayedDateRange?.from?.toISOString(),
+  //   toDisplayed: displayedDateRange?.to?.toISOString(),
+  //   filtersApplied,
+  //   isMounted,
+  //   lastFetchedRange,
+  // });
 
   useEffect(() => {
     setIsMounted(true);
@@ -137,12 +137,12 @@ export function TradeAnalytics({
 
   const fetchAnalytics = useCallback(async () => {
     if (isFetching) {
-      console.log("fetchAnalytics skipped: Already fetching");
+      // console.log("fetchAnalytics skipped: Already fetching");
       return;
     }
 
     if (!displayedDateRange?.from || !displayedDateRange?.to) {
-      console.log("fetchAnalytics skipped: Invalid date range", { displayedDateRange });
+      // console.log("fetchAnalytics skipped: Invalid date range", { displayedDateRange });
       return;
     }
 
@@ -154,21 +154,21 @@ export function TradeAnalytics({
       lastFetchedRange.dateStart === dateStart &&
       lastFetchedRange.dateEnd === dateEnd
     ) {
-      console.log("fetchAnalytics skipped: Same date range already fetched", {
-        lastFetchedRange,
-        dateStart,
-        dateEnd,
-      });
+      // console.log("fetchAnalytics skipped: Same date range already fetched", {
+      //   lastFetchedRange,
+      //   dateStart,
+      //   dateEnd,
+      // });
       return;
     }
 
-    console.log("fetchAnalytics started", {
-      dateStart,
-      dateEnd,
-      displayedMarket,
-      includeHoldings,
-      timestamp: new Date().toISOString(),
-    });
+    // console.log("fetchAnalytics started", {
+    //   dateStart,
+    //   dateEnd,
+    //   displayedMarket,
+    //   includeHoldings,
+    //   timestamp: new Date().toISOString(),
+    // });
 
     setIsFetching(true);
     const accountForMarket = displayedMarket === "PH" && phAccountNo ? phAccountNo : accountNo;
@@ -240,16 +240,16 @@ export function TradeAnalytics({
 
   useEffect(() => {
     if (isMounted && filtersApplied && isDateRangeDifferent) {
-      console.log("useEffect: Triggering fetchAnalytics", {
-        displayedDateRange,
-        from: displayedDateRange?.from?.toISOString(),
-        to: displayedDateRange?.to?.toISOString(),
-        fromDateOnly: displayedDateRange?.from?.toISOString().split("T")[0],
-        toDateOnly: displayedDateRange?.to?.toISOString().split("T")[0],
-        isDateRangeDifferent,
-        filtersApplied,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("useEffect: Triggering fetchAnalytics", {
+      //   displayedDateRange,
+      //   from: displayedDateRange?.from?.toISOString(),
+      //   to: displayedDateRange?.to?.toISOString(),
+      //   fromDateOnly: displayedDateRange?.from?.toISOString().split("T")[0],
+      //   toDateOnly: displayedDateRange?.to?.toISOString().split("T")[0],
+      //   isDateRangeDifferent,
+      //   filtersApplied,
+      //   timestamp: new Date().toISOString(),
+      // });
       fetchAnalytics();
     }
   }, [fetchAnalytics, filtersApplied, isMounted, isDateRangeDifferent]);
@@ -264,21 +264,21 @@ export function TradeAnalytics({
 
   const handleApplyFilters = useCallback(
     debounce((newDateRange: DateRange | undefined, newIncludeHoldings: boolean) => {
-      console.log("handleApplyFilters triggered", {
-        newDateRange,
-        from: newDateRange?.from?.toISOString(),
-        to: newDateRange?.to?.toISOString(),
-        fromDateOnly: newDateRange?.from?.toISOString().split("T")[0],
-        toDateOnly: newDateRange?.to?.toISOString().split("T")[0],
-        newIncludeHoldings,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("handleApplyFilters triggered", {
+      //   newDateRange,
+      //   from: newDateRange?.from?.toISOString(),
+      //   to: newDateRange?.to?.toISOString(),
+      //   fromDateOnly: newDateRange?.from?.toISOString().split("T")[0],
+      //   toDateOnly: newDateRange?.to?.toISOString().split("T")[0],
+      //   newIncludeHoldings,
+      //   timestamp: new Date().toISOString(),
+      // });
       if (!newDateRange || !newDateRange.from || !newDateRange.to || isNaN(newDateRange.from.getTime()) || isNaN(newDateRange.to.getTime())) {
-        console.log("handleApplyFilters: Invalid date range", { newDateRange });
+        // console.log("handleApplyFilters: Invalid date range", { newDateRange });
         setError("Invalid date range selected");
         return;
       }
-      console.log("handleApplyFilters: Applying filters", { newDateRange, newIncludeHoldings });
+      // console.log("handleApplyFilters: Applying filters", { newDateRange, newIncludeHoldings });
       setDisplayedDateRange(newDateRange);
       setIncludeHoldings(newIncludeHoldings);
       setFiltersApplied(true);
@@ -287,27 +287,27 @@ export function TradeAnalytics({
   );
 
   const handleTabChange = useCallback((val: string) => {
-    console.log("Tab changed to:", val);
+    // console.log("Tab changed to:", val);
     setActiveTab(val as "longAndShort" | "long" | "short");
   }, []);
 
   const formatDateRange = (range: DateRange | undefined) => {
     if (!range?.from) {
-      console.log("formatDateRange: No date selected", { range });
+      // console.log("formatDateRange: No date selected", { range });
       return "No date selected";
     }
     const formatted = (() => {
       if (!range.to) return format(range.from, "MMMM d, yyyy");
       return `${format(range.from, "MMMM d, yyyy")} to ${format(range.to, "MMMM d, yyyy")}`;
     })();
-    console.log("formatDateRange result:", {
-      range,
-      from: range?.from?.toISOString(),
-      to: range?.to?.toISOString(),
-      fromDateOnly: range?.from?.toISOString().split("T")[0],
-      toDateOnly: range?.to?.toISOString().split("T")[0],
-      formatted,
-    });
+    // console.log("formatDateRange result:", {
+    //   range,
+    //   from: range?.from?.toISOString(),
+    //   to: range?.to?.toISOString(),
+    //   fromDateOnly: range?.from?.toISOString().split("T")[0],
+    //   toDateOnly: range?.to?.toISOString().split("T")[0],
+    //   formatted,
+    // });
     return formatted;
   };
 
@@ -327,7 +327,7 @@ export function TradeAnalytics({
   };
 
   if (error || !analyticsData) {
-    console.log("Rendering error state", { error, hasAnalyticsData: !!analyticsData });
+    // console.log("Rendering error state", { error, hasAnalyticsData: !!analyticsData });
     return (
       <div className="flex items-center justify-center font-sans text-sm font-normal min-w-[48rem]">
         <Card className="max-w-3xl w-full">
@@ -351,7 +351,7 @@ export function TradeAnalytics({
   }
 
   const mapAnalyticsData = (bundle: TradeAnalyticsBundle) => {
-    console.log("Mapping bundle:", JSON.stringify(bundle.overallStats.stats, null, 2));
+    // console.log("Mapping bundle:", JSON.stringify(bundle.overallStats.stats, null, 2));
     return {
       aum: bundle.overallStats.stats.aum,
       numberOfTrades: bundle.overallStats.stats.numberOfTrades,
@@ -384,10 +384,10 @@ export function TradeAnalytics({
         ? mapAnalyticsData(analyticsData.long)
         : mapAnalyticsData(analyticsData.short);
 
-  console.log("Mapped Active Data:", {
-    data: JSON.stringify(activeData, null, 2),
-    realizedPnlUsd: activeData.realizedPnlUsd,
-  });
+  // console.log("Mapped Active Data:", {
+  //   data: JSON.stringify(activeData, null, 2),
+  //   realizedPnlUsd: activeData.realizedPnlUsd,
+  // });
 
   return (
     <div className="flex flex-col items-center font-sans text-sm font-normal min-w-[48rem] pt-6 gap-4 pb-0">

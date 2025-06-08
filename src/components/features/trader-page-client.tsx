@@ -32,24 +32,24 @@ export function TraderPageClient({
   // Memoize dateRange to prevent unnecessary re-renders
   const stableDateRange = useMemo(() => dateRange, [dateRange]);
 
-  console.log("TraderPageClient initialized", {
-    displayedDateRange: {
-      from: stableDateRange?.from?.toISOString(),
-      to: stableDateRange?.to?.toISOString(),
-    },
-    displayedMarket: market,
-    initialData: initialData ? JSON.stringify(initialData, null, 2) : null,
-  });
+  // console.log("TraderPageClient initialized", {
+  //   displayedDateRange: {
+  //     from: stableDateRange?.from?.toISOString(),
+  //     to: stableDateRange?.to?.toISOString(),
+  //   },
+  //   displayedMarket: market,
+  //   initialData: initialData ? JSON.stringify(initialData, null, 2) : null,
+  // });
 
   const handleMarketChange = useCallback(
     (newMarket: string) => {
-      console.log("Market changed to:", {
-        market: newMarket,
-        displayedDateRange: {
-          from: stableDateRange?.from?.toISOString(),
-          to: stableDateRange?.to?.toISOString(),
-        },
-      });
+      // console.log("Market changed to:", {
+      //   market: newMarket,
+      //   displayedDateRange: {
+      //     from: stableDateRange?.from?.toISOString(),
+      //     to: stableDateRange?.to?.toISOString(),
+      //   },
+      // });
       setMarket(newMarket);
     },
     [stableDateRange]

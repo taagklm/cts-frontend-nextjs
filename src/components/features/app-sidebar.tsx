@@ -78,7 +78,6 @@ const riskGroupItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const pathname = usePathname() ?? "";
-    console.log("Current pathname:", pathname); // Debug log
 
     return (
         <Sidebar collapsible="icon" {...props}>

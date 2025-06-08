@@ -6,18 +6,19 @@ const useMock = false;    // Toggle true to use mock data
 // Handle POST requests to fetch trade analytics
 export async function POST(request: Request) {
   try {
-    // Return mock data if enabled
-    if (useMock) {
-      return NextResponse.json(mockData);
-    }
-
+    // Get request body and log details into console.
     const body = await request.json();
+    console.log("API Next.js Route Handler:", {
+      endpoint: "/api/trade-analytics",
+      requestType: "POST",
+      requestBody: body || "No request body provided"
+    });
 
     // Validate request body
     if (!body.market || !body.account || !body.dateStart || !body.dateEnd) {
       console.error("Invalid request body:", body);
       return NextResponse.json(
-        { error: "Missing required fields: market, account, dateStart, dateEnd are required" },
+        { error: { message: "Missing required fields: market, account, dateStart, dateEnd are required", code: "MISSING_FIELDS" } },
         { status: 400 }
       );
     }
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     if (!validMarkets.includes(body.market)) {
       console.error("Invalid market:", body.market);
       return NextResponse.json(
-        { error: "Invalid market. Must be one of: Global, US, HK, JP, PH" },
+        { error: { message: "Invalid market. Must be one of: Global, US, HK, JP, PH", code: "INVALID_MARKET" } },
         { status: 400 }
       );
     }
@@ -39,13 +40,26 @@ export async function POST(request: Request) {
     } catch {
       console.error("Invalid date format:", { dateStart: body.dateStart, dateEnd: body.dateEnd });
       return NextResponse.json(
-        { error: "Invalid date format. Use yyyy-MM-dd" },
+        { error: { message: "Invalid date format. Use yyyy-MM-dd", code: "INVALID_DATE" } },
         { status: 400 }
       );
     }
 
-    // Construct backend API URL
+    // Return mock data if useMock is true.
+    if (useMock) {
+      return NextResponse.json(mockData);
+    }
+
+    // If not using mock data, proceed with backend API call
+    // Construct backend API URL, enforcing HTTPS
     const backendUrl = process.env.BACKEND_API_URL || "https://localhost:7025";
+    if (!backendUrl.startsWith("https://")) {
+      console.error("Invalid BACKEND_API_URL: Must use HTTPS", { backendUrl });
+      return NextResponse.json(
+        { error: { message: "Server configuration error: Backend URL must use HTTPS", code: "INVALID_CONFIG" } },
+        { status: 500 }
+      );
+    }
     const endpoint = `${backendUrl}/api/TradeAnalytics`;
 
     // Prepare request body
@@ -66,43 +80,35 @@ export async function POST(request: Request) {
       body: requestBody,
     });
 
-    // Make API request with HTTP fallback to HTTPS
-    let response = await fetch(endpoint, {
+    // Make API request
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(requestBody),
     });
 
-    if (!response.ok && backendUrl.startsWith("http://")) {
-      console.warn("HTTP request failed, retrying with HTTPS");
-      const httpsEndpoint = endpoint.replace("http://", "https://");
-      response = await fetch(httpsEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(requestBody),
-      });
-    }
-
-    const responseBody = await response.text();
-    console.log("Backend response:", {
-      status: response.status,
-      statusText: response.statusText,
-      body: responseBody,
-    });
-
-    // Parse response
+    // Parse API response, store in result
     let result;
     try {
-      result = JSON.parse(responseBody);
-    } catch {
-      console.error("Failed to parse response body:", responseBody);
+      result = await response.json();
+    } catch (error: any) {
+      console.error("Failed to parse JSON response:", {
+        error: error.message,
+        body: await response.text()
+      });
       return NextResponse.json(
-        { error: "Invalid response from backend" },
+        { error: "Failed to parse JSON response from backend" },
         { status: 500 }
       );
     }
+
+    // // Log response details
+    // console.log("Backend response:", {
+    //   status: response.status,
+    //   statusText: response.statusText,
+    //   body: result,
+    // });
 
     if (!response.ok) {
       console.error("Backend error:", result);
@@ -112,6 +118,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // Log successful response and return result
+    console.log("Successfully fetched trade analytics:", { status: response.status, body: result });
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error in trade-analytics route:", {
@@ -121,7 +129,7 @@ export async function POST(request: Request) {
     });
     if (error.cause?.code === "UND_ERR_SOCKET") {
       return NextResponse.json(
-        { error: "Failed to connect to backend. Ensure the server is running at http://localhost:7025 or https://localhost:7025" },
+        { error: "Failed to connect to backend. Ensure the server is running at https://localhost:7025" },
         { status: 503 }
       );
     }

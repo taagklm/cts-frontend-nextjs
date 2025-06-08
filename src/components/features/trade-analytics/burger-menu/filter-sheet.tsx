@@ -57,7 +57,7 @@ export function Range({
       if (isAfter(fromDate, toDate)) {
         setError("End date cannot be earlier than start date");
         setIsToValid(false);
-        console.log("Range: Invalid range (To before From)", { fromDate, toDate });
+        // console.log("Range: Invalid range (To before From)", { fromDate, toDate });
         return;
       }
       setError(null);
@@ -65,15 +65,15 @@ export function Range({
       setIsToValid(true);
       const newDateRange: DateRange = { from: fromDate, to: toDate };
       setDateRange(newDateRange);
-      console.log("Range: Date range updated", {
-        from: newDateRange.from?.toISOString(),
-        to: newDateRange.to?.toISOString(),
-      });
+      // console.log("Range: Date range updated", {
+      //   from: newDateRange.from?.toISOString(),
+      //   to: newDateRange.to?.toISOString(),
+      // });
     } else {
       setDateRange(undefined);
       setIsFromValid(!!fromDate && !isNaN(fromDate.getTime()));
       setIsToValid(!!toDate && !isNaN(toDate.getTime()));
-      console.log("Range: Date range set to undefined", { fromDate, toDate });
+      // console.log("Range: Date range set to undefined", { fromDate, toDate });
     }
   }, [fromDate, toDate, setDateRange]);
 
@@ -87,18 +87,18 @@ export function Range({
         : [...selectedStrategies.filter((s) => s !== "None"), strategy];
     }
     setSelectedStrategies(updatedStrategies);
-    console.log("Range: handleStrategyChange:", { strategy, updatedStrategies });
+    // console.log("Range: handleStrategyChange:", { strategy, updatedStrategies });
   };
 
   const handleSelectAll = () => {
     const allStrategies = strategies.filter((s) => s !== "None");
     setSelectedStrategies(allStrategies);
-    console.log("Range: handleSelectAll:", { allStrategies });
+    // console.log("Range: handleSelectAll:", { allStrategies });
   };
 
   const handleUnselectAll = () => {
     setSelectedStrategies([]);
-    console.log("Range: handleUnselectAll");
+    // console.log("Range: handleUnselectAll");
   };
 
   const isDateRangeComplete = () => {
@@ -117,9 +117,9 @@ export function Range({
   const handleApplyFiltersClick = React.useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      console.log("Range: handleApplyFilters:", { fromDate, toDate, isFromValid, isToValid });
+      // console.log("Range: handleApplyFilters:", { fromDate, toDate, isFromValid, isToValid });
       if (!isFromValid || !isToValid || !isDateRangeComplete()) {
-        console.log("Range: Apply Filters blocked", { isFromValid, isToValid, isDateRangeComplete: isDateRangeComplete() });
+        // console.log("Range: Apply Filters blocked", { isFromValid, isToValid, isDateRangeComplete: isDateRangeComplete() });
         window.alert("Please select a valid date range.");
         return;
       }

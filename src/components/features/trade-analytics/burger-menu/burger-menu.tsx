@@ -36,17 +36,17 @@ export function BurgerMenu({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleOpenChange = useCallback((open: boolean) => {
-    console.log("Custom modal open state changing to:", open);
+    // console.log("Custom modal open state changing to:", open);
     setIsSheetOpen(open);
   }, []);
 
   const handleDropdownOpenChange = useCallback((open: boolean) => {
-    console.log("Burger menu dropdown open state changing to:", open);
+    // console.log("Burger menu dropdown open state changing to:", open);
     setIsDropdownOpen(open);
   }, []);
 
   const handleApplyFilters = useCallback(() => {
-    console.log("Applying filters and closing modal", { dateRange, includeHoldings });
+    // console.log("Applying filters and closing modal", { dateRange, includeHoldings });
     setIsSheetOpen(false);
     onApplyFilters(dateRange, includeHoldings);
   }, [dateRange, includeHoldings, onApplyFilters]);

@@ -74,26 +74,26 @@ export function PrimarySetupStatsTable({
     }, 1000);
   }, [data, selectedMarket]);
 
-  // Debug
-  useEffect(() => {
-    console.log("PrimarySetupStatsTable loading state:", isLoading);
-    console.log("PrimarySetupStatsTable data:", tableData);
-    if (tableData) {
-      Object.keys(tableData).forEach((setup) => {
-        console.log(`Setup ${setup} data:`, tableData[setup]);
-        if (isPHMarket) {
-          console.log(
-            `Setup ${setup} PHP metrics:`,
-            {
-              returnPhp: tableData[setup].returnPhp,
-              realizedPnlPhp: tableData[setup].realizedPnlPhp,
-              unrealizedPnlPhp: tableData[setup].unrealizedPnlPhp,
-            }
-          );
-        }
-      });
-    }
-  }, [isLoading, tableData, isPHMarket]);
+  // // Debug
+  // useEffect(() => {
+  //   console.log("PrimarySetupStatsTable loading state:", isLoading);
+  //   console.log("PrimarySetupStatsTable data:", tableData);
+  //   if (tableData) {
+  //     Object.keys(tableData).forEach((setup) => {
+  //       console.log(`Setup ${setup} data:`, tableData[setup]);
+  //       if (isPHMarket) {
+  //         console.log(
+  //           `Setup ${setup} PHP metrics:`,
+  //           {
+  //             returnPhp: tableData[setup].returnPhp,
+  //             realizedPnlPhp: tableData[setup].realizedPnlPhp,
+  //             unrealizedPnlPhp: tableData[setup].unrealizedPnlPhp,
+  //           }
+  //         );
+  //       }
+  //     });
+  //   }
+  // }, [isLoading, tableData, isPHMarket]);
 
   if (isLoading) {
     return (

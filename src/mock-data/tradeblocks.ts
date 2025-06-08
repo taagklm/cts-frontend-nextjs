@@ -4,7 +4,7 @@
 //  DateStart: 2025-01-01;
 //  DateEnd: 2025-02-01;
 
-export const mockTradeblocks = [
+export const mockData = [
   {
     "id": 5720,
     "account": "U1673066",

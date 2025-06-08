@@ -5,7 +5,7 @@
 //  DateStart: 2025-01-01;
 //  DateEnd: 2025-01-25;
 
-export const mockIbkrDailyPnl = [
+export const mockData = [
   {
     account: "U1673041",
     dailyPnl: [
