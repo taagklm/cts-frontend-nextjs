@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockData } from "@/mock-data/daily-pnl";
 
-const useMock = true; // Keep true for testing
+const useMock = false; // Keep true for testing
 
 // Handle POST requests to fetch daily PnL data
 export async function POST(request: Request) {
@@ -33,6 +33,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate market
+    const validMarkets = ["IB", "US", "HK", "JP", "PH"];
+    if (!validMarkets.includes(body.market)) {
+      console.error("Invalid market:", body.market);
+      return NextResponse.json(
+        { error: { message: "Invalid market. Must be one of: IB, US, HK, JP, PH", code: "INVALID_MARKET" } },
+        { status: 400 }
+      );
+    }
+
     // Validate date format
     try {
       new Date(body.dateStart).toISOString();
@@ -45,12 +55,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return mock data if enabled
+    // Return mock data if useMock is true.
     if (useMock) {
-      // Filter mock data by account
-      const filteredData = mockData.filter(item => item.account === body.account);
-      console.log("Filtered mock data for account:", body.account, filteredData);
-      return NextResponse.json(filteredData);
+      return NextResponse.json(mockData);
     }
 
     // If not using mock data, proceed with backend API call
@@ -63,7 +70,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    const endpoint = `${backendUrl}/api/daily-pnl-summary`;
+    const endpoint = `${backendUrl}/api/dailypnl/summary`;
 
     // Prepare request body
     const requestBody = {
@@ -89,14 +96,15 @@ export async function POST(request: Request) {
       body: JSON.stringify(requestBody),
     });
 
-    // Parse API response, store in result
+    // Read response
+    const responseText = await response.text();
     let result;
     try {
-      result = await response.json();
+      result = JSON.parse(responseText);
     } catch (error: any) {
       console.error("Failed to parse JSON response:", {
         error: error.message,
-        body: await response.text()
+        body: responseText
       });
       return NextResponse.json(
         { error: "Failed to parse JSON response from backend" },
@@ -104,22 +112,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // // Log response details
-    // console.log("Backend response:", {
-    //   status: response.status,
-    //   statusText: response.statusText,
-    //   body: result,
-    // });
-
     if (!response.ok) {
       console.error("Backend error:", result);
       return NextResponse.json(
-        { error: result.message || "Failed to fetch analytics from backend" },
+        { error: result.message || "Failed to fetch daily pnl from backend" },
         { status: response.status }
       );
     }
 
+    // Log successful response and return result
+    console.log("Successfully fetched daily pnl:", { status: response.status, body: result });
     return NextResponse.json(result);
+
   } catch (error: any) {
     console.error("Error in dailypnl route:", {
       message: error.message,
