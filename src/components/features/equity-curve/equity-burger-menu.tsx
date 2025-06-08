@@ -16,6 +16,7 @@ type EquityBurgerMenuProps = {
   onExportData?: () => void;
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
+  disabled?: boolean; // Added disabled prop
 };
 
 export function EquityBurgerMenu({
@@ -23,6 +24,7 @@ export function EquityBurgerMenu({
   onExportData = () => console.log("Exporting Data as CSV"),
   dateRange,
   setDateRange,
+  disabled = false, // Default to false
 }: EquityBurgerMenuProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -143,7 +145,7 @@ export function EquityBurgerMenu({
       `}</style>
 
       <DropdownMenu onOpenChange={handleDropdownOpenChange}>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild disabled={disabled}>
           <button
             className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-700 focus:outline-none"
             aria-label="Open menu"

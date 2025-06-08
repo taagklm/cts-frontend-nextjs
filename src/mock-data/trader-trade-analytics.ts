@@ -26,7 +26,7 @@ export const mockData = {
             "topWinners": [
                 {
                     "dateEntered": "2024-12-05T07:07:57",
-                    "symbol": "TSLA",
+                    "symbol": "TSLA 25038C00170000",
                     "totalReturn": 4591.21,
                     "realizedReturn": 4591.21,
                     "unrealizedReturn": 0,

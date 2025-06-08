@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { isAfter } from "date-fns";
-import { DatePickerWithRange } from "../trade-analytics/burger-menu/date-picker";
+import { DatePickerWithRange } from "./equity-date-picker";
 
 function normalizeDateToUTC(date: Date): Date {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -36,7 +36,7 @@ export function EquityRange({
         return;
       }
       setError(null);
-      setIsFromValid(true); // Explicitly set valid when range is valid
+      setIsFromValid(true);
       setIsToValid(true);
       const newDateRange: DateRange = { from: fromDate, to: toDate };
       setDateRange(newDateRange);
@@ -46,7 +46,7 @@ export function EquityRange({
       });
     } else {
       setDateRange(undefined);
-      setIsFromValid(!!fromDate && !isNaN(fromDate.getTime())); // Update validity based on date presence
+      setIsFromValid(!!fromDate && !isNaN(fromDate.getTime()));
       setIsToValid(!!toDate && !isNaN(toDate.getTime()));
       console.log("EquityRange: Date range set to undefined", { fromDate, toDate });
     }
