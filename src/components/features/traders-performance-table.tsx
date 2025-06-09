@@ -63,7 +63,7 @@ export const columns: ColumnDef<TradersPerformanceTableData>[] = [
       const trader = row.getValue("trader") as string;
       const ibAccountNo = row.getValue("ibAccountNo") as string;
       const phAccountNo = row.getValue("phAccountNo") as string;
-      console.log("TradersPerformanceTable: Linking trader:", { trader, ibAccountNo, phAccountNo });
+      // console.log("TradersPerformanceTable: Linking trader:", { trader, ibAccountNo, phAccountNo });
       return (
         <Link
           href={{
