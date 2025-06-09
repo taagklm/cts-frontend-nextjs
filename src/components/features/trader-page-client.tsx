@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { DateRange } from "react-day-picker";
 import { TradeAnalytics } from "@/components/features/trade-analytics/trade-analytics";
-import { EquityCurve } from "@/components/features/equity-curve";
+import { EquityCurve } from "./equity-curve/equity-curve";
 import { TradeCalendar } from "./daily-calendar-return";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -86,8 +86,6 @@ export function TraderPageClient({
         accountNo={accountNo}
         phAccountNo={phAccountNo}
         market={market}
-        dateRange={stableDateRange}
-        setDateRange={setDateRange}
       />
       <TradeCalendar
         accountNo={accountNo}

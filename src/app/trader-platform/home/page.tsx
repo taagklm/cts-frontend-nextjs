@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { startOfYear } from "date-fns";
 import { mockData as analyticsMockData } from "@/mock-data/trader-trade-analytics";
 import { TraderPageClient } from "@/components/features/trader-page-client";
+import { DateRange } from "react-day-picker";
 
 // Define static metadata for the homepage
 export const metadata = {
@@ -32,16 +33,21 @@ export default async function Page() {
   // Fetch trade analytics or use mock data
   let analyticsData = analyticsMockData;
   let error = null;
+  let displayedDateRange: DateRange | undefined = undefined; // Initialize date range
+  const displayedMarket = "Global"; // Default market from API request
 
   try {
     const today = new Date();
+    const startDate = startOfYear(today);
+    displayedDateRange = { from: startDate, to: today }; // Set date range for TraderPageClient
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/trade-analytics`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        market: "Global",
+        market: displayedMarket,
         account: accountNo,
-        dateStart: startOfYear(today).toISOString().split("T")[0],
+        dateStart: startDate.toISOString().split("T")[0],
         dateEnd: today.toISOString().split("T")[0],
         isHoldingsIncluded: false,
       }),
@@ -65,6 +71,8 @@ export default async function Page() {
       phAccountNo={phAccountNo}
       initialData={analyticsData}
       initialError={error}
+      displayedDateRange={displayedDateRange}
+      displayedMarket={displayedMarket}
     />
   );
 }
