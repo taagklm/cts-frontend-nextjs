@@ -30,8 +30,8 @@ interface EquityCurveProps {
 }
 
 const chartConfig = {
-  totalPnl: {
-    label: "Total P&L",
+  cumulativePnl: {
+    label: "Cumulative P&L",
     color: "#4CAF50",
   },
   negativePnl: {
@@ -209,11 +209,17 @@ export function EquityCurve({
       const entryDate = new Date(entry.date);
       return entryDate >= dateRange.from! && entryDate <= dateRange.to!;
     })
-    .map((entry) => ({
-      date: new Date(entry.date),
-      totalPnl: entry.totalPnl,
-    }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((entry, index, array) => {
+      const cumulativePnl = array
+        .slice(0, index + 1)
+        .reduce((sum, current) => sum + current.totalPnl, 0);
+      return {
+        date: new Date(entry.date),
+        totalPnl: entry.totalPnl,
+        cumulativePnl, // Store the cumulative sum
+      };
+    });
 
   if (chartData.length === 0) {
     return (
@@ -239,6 +245,11 @@ export function EquityCurve({
       </div>
     );
   }
+
+  const minPnl = Math.min(...chartData.map((d) => d.cumulativePnl));
+  const maxPnl = Math.max(...chartData.map((d) => d.cumulativePnl));
+  const padding = 500; // Add padding for visibility
+  const yDomain = [minPnl - padding, maxPnl + padding];
 
   return (
     <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
@@ -297,14 +308,13 @@ export function EquityCurve({
                 axisLine={false}
                 tickMargin={10}
                 fontSize={12}
-                domain={[-2000, 2500]}
-                ticks={[-2000, -1500, -1000, -500, 0, 500, 1000, 1500, 2000, 2500]}
+                domain={yDomain}
                 tickFormatter={(value) => value.toFixed(0)}
               />
               <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
               <Area
-                dataKey="totalPnl"
-                name="Total P&L"
+                dataKey="cumulativePnl"
+                name="Cumulative P&L"
                 type="linear"
                 stroke="#4CAF50"
                 fill="url(#fillPositive)"
