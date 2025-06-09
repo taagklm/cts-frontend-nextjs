@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { mockData } from "@/mock-data/daily-pnl";
 
-const useMock = false; // Keep true for testing
+const useMock = true; // Keep true for testing
 
-// Handle POST requests to fetch daily PnL data
+// Handle POST requests to fetch daily pnl summary data
 export async function POST(request: Request) {
   try {
     // Get request body and log details into console.
     const body = await request.json();
     console.log("API Next.js Route Handler:", {
-      endpoint: "/api/dailypnl",
+      endpoint: "/api/dailypnl/summary",
       requestType: "POST",
       requestBody: body || "No request body provided"
     });
@@ -115,13 +115,13 @@ export async function POST(request: Request) {
     if (!response.ok) {
       console.error("Backend error:", result);
       return NextResponse.json(
-        { error: result.message || "Failed to fetch daily pnl from backend" },
+        { error: result.message || "Failed to fetch daily pnl summary from backend" },
         { status: response.status }
       );
     }
 
     // Log successful response and return result
-    console.log("Successfully fetched daily pnl:", { status: response.status, body: result });
+    console.log("Successfully fetched daily pnl summary:", { status: response.status, body: result });
     return NextResponse.json(result);
 
   } catch (error: any) {

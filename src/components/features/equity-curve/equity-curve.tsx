@@ -93,9 +93,9 @@ export function EquityCurve({
         dateStart,
         dateEnd,
       };
-      console.log("Fetching daily PnL with body:", requestBody);
+      console.log("Fetching daily pnl summary for equity curve component:", requestBody);
 
-      const response = await fetch("/api/dailypnl", {
+      const response = await fetch("/api/dailypnl/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -115,7 +115,7 @@ export function EquityCurve({
       }
 
       const data: AccountPnl[] = await response.json();
-      console.log("Received data for account:", selectedAccount, data);
+      console.log("Received daily pnl summary for equity curve component:", selectedAccount, data);
 
       if (!data.length) {
         setError(`No data found for account ${selectedAccount}`);

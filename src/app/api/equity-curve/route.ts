@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockData } from "@/mock-data/daily-pnl";
 
-const useMock = false; // Set to false to use backend API, true to use mock data
+const useMock = true; // Set to false to use backend API, true to use mock data
 
 export async function POST(request: Request) {
   console.log("API Next.js Route Handler:", {
