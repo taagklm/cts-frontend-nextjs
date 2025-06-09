@@ -64,7 +64,6 @@ export default async function Page() {
       accountNo={accountNo}
       phAccountNo={phAccountNo}
       initialData={analyticsData}
-      initialError={error}
-    />
+      initialError={error} displayedDateRange={undefined} displayedMarket={""}    />
   );
 }
