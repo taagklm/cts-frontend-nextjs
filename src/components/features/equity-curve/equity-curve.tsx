@@ -1,9 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { Card, CardHeader, CardDescription, CardContent, CardTitle } from "../../ui/card";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "../../ui/chart";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ReferenceLine,
+  Line,
+} from "recharts";
+import {
+  Card,
+  CardHeader,
+  CardDescription,
+  CardContent,
+  CardTitle,
+} from "../../ui/card";
+import { ChartConfig, ChartContainer, ChartTooltip } from "../../ui/chart";
 import { format, startOfYear } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { EquityBurgerMenu } from "./equity-burger-menu";
@@ -29,16 +43,53 @@ interface EquityCurveProps {
   setDateRange?: (range: DateRange | undefined) => void;
 }
 
+interface ChartDataPoint {
+  date: Date;
+  totalPnl: number;
+  cumulativePnl: number;
+}
+
+interface ChartLineSegment {
+  data: ChartDataPoint[];
+  isPositive: boolean;
+}
+
 const chartConfig = {
   cumulativePnl: {
     label: "Cumulative P&L",
     color: "#4CAF50",
   },
-  negativePnl: {
-    label: "Negative P&L",
-    color: "#FF5252",
-  },
 } satisfies ChartConfig;
+
+const CustomTooltipContent = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const dataPoint = payload[0].payload;
+    const dotColor = dataPoint.cumulativePnl < 0 ? "#FF5252" : "#4CAF50";
+    return (
+      <div className="rounded-lg border bg-background p-2 shadow-sm">
+        <div className="flex items-center">
+          <span
+            className="mr-2 inline-block h-2 w-2 rounded-full"
+            style={{ backgroundColor: dotColor }}
+          ></span>
+          <span className="text-sm font-medium">
+            {format(dataPoint.date, "MMM d, yyyy")}: {dataPoint.cumulativePnl.toFixed(2)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomActiveDot = (props: any) => {
+  const { cx, cy, payload } = props;
+  const color = payload.cumulativePnl < 0 ? "#FF5252" : "#4CAF50";
+
+  return (
+    <circle cx={cx} cy={cy} r={5} stroke="white" strokeWidth={2} fill={color} />
+  );
+};
 
 export function EquityCurve({
   accountNo,
@@ -93,7 +144,6 @@ export function EquityCurve({
         dateStart,
         dateEnd,
       };
-      console.log("Fetching daily pnl summary for equity curve component:", requestBody);
 
       const response = await fetch("/api/dailypnl/summary", {
         method: "POST",
@@ -102,21 +152,11 @@ export function EquityCurve({
       });
 
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { error: "Failed to parse error response" };
-        }
-        console.error("Fetch failed:", { status: response.status, errorData });
-        throw new Error(
-          errorData.error || `Failed to fetch daily PnL (Status: ${response.status})`
-        );
+        const errorData = await response.json().catch(() => ({ error: "Failed to parse error response" }));
+        throw new Error(errorData.error || `Failed to fetch daily PnL (Status: ${response.status})`);
       }
 
       const data: AccountPnl[] = await response.json();
-      console.log("Received daily pnl summary for equity curve component:", selectedAccount, data);
-
       if (!data.length) {
         setError(`No data found for account ${selectedAccount}`);
         setAccountData([]);
@@ -125,10 +165,6 @@ export function EquityCurve({
 
       setAccountData(data);
     } catch (err: any) {
-      console.error("Fetch error:", {
-        message: err.message,
-        stack: err.stack,
-      });
       setError(err.message || "An error occurred while fetching data");
     } finally {
       setIsLoading(false);
@@ -137,13 +173,8 @@ export function EquityCurve({
 
   useEffect(() => {
     if (dateRange.from && dateRange.to && selectedAccount) {
-      console.log("Triggering fetch for account:", selectedAccount, {
-        dateStart: format(dateRange.from, "yyyy-MM-dd"),
-        dateEnd: format(dateRange.to, "yyyy-MM-dd"),
-      });
       fetchDailyPnl();
     } else {
-      console.warn("Skipping fetch due to missing data:", { selectedAccount, dateRange });
       setIsLoading(false);
       setError("Invalid account or date range");
     }
@@ -161,16 +192,16 @@ export function EquityCurve({
               <EquityBurgerMenu
                 dateRange={dateRange}
                 setDateRange={setDateRange}
-                onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
-                onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+                onExportReport={() => {}}
+                onExportData={() => {}}
                 disabled
               />
             </div>
-            <CardDescription className="pb-0 pt-0">
+            <CardDescription>
               Loading equity data for account: {selectedAccount}
             </CardDescription>
           </CardHeader>
-          <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
+          <CardContent>
             <Loading variant="table" rows={6} className="w-full" />
           </CardContent>
         </Card>
@@ -190,8 +221,8 @@ export function EquityCurve({
               <EquityBurgerMenu
                 dateRange={dateRange}
                 setDateRange={setDateRange}
-                onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
-                onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+                onExportReport={() => {}}
+                onExportData={() => {}}
               />
             </div>
             <CardDescription>
@@ -203,7 +234,7 @@ export function EquityCurve({
     );
   }
 
-  const chartData = accountData
+  const chartData: ChartDataPoint[] = accountData
     .flatMap(({ dailyPnl }) => dailyPnl)
     .filter((entry) => {
       const entryDate = new Date(entry.date);
@@ -217,39 +248,51 @@ export function EquityCurve({
       return {
         date: new Date(entry.date),
         totalPnl: entry.totalPnl,
-        cumulativePnl, // Store the cumulative sum
+        cumulativePnl,
       };
     });
 
-  if (chartData.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-w-[48rem]">
-        <Card className="max-w-3xl w-full pb-0 mb-6">
-          <CardHeader>
-            <div className="grid grid-cols-5">
-              <div className="col-span-4">
-                <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
-              </div>
-              <EquityBurgerMenu
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
-                onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
-              />
-            </div>
-            <CardDescription>
-              No equity data available for account: {selectedAccount}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+  const lineSegments: ChartLineSegment[] = [];
+  let currentSegment: ChartDataPoint[] = [];
+  let lastSign: number | null = null;
+
+  chartData.forEach((point, i) => {
+    const currentPnl = point.cumulativePnl;
+    const currentSign = Math.sign(currentPnl);
+
+    if (i === 0) {
+      currentSegment.push(point);
+      lastSign = currentSign;
+      return;
+    }
+
+    const prevPoint = chartData[i - 1];
+    const prevPnl = prevPoint.cumulativePnl;
+
+    if ((prevPnl < 0 && currentPnl >= 0) || (prevPnl >= 0 && currentPnl < 0)) {
+      const t = -prevPnl / (currentPnl - prevPnl);
+      const crossingTime = prevPoint.date.getTime() + t * (point.date.getTime() - prevPoint.date.getTime());
+      const crossingPoint: ChartDataPoint = {
+        date: new Date(crossingTime),
+        totalPnl: 0,
+        cumulativePnl: 0,
+      };
+      currentSegment.push(crossingPoint);
+      lineSegments.push({ data: [...currentSegment], isPositive: prevPnl >= 0 });
+      currentSegment = [crossingPoint, point];
+      lastSign = currentSign;
+    } else {
+      currentSegment.push(point);
+    }
+  });
+
+  if (currentSegment.length > 0) {
+    lineSegments.push({ data: currentSegment, isPositive: lastSign! >= 0 });
   }
 
   const minPnl = Math.min(...chartData.map((d) => d.cumulativePnl));
   const maxPnl = Math.max(...chartData.map((d) => d.cumulativePnl));
-  const padding = 500; // Add padding for visibility
-  const yDomain = [minPnl - padding, maxPnl + padding];
+  const offset = maxPnl <= 0 ? 0 : minPnl >= 0 ? 1 : maxPnl / (maxPnl - minPnl);
 
   return (
     <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
@@ -262,11 +305,11 @@ export function EquityCurve({
             <EquityBurgerMenu
               dateRange={dateRange}
               setDateRange={setDateRange}
-              onExportReport={() => console.log("Exporting Equity Curve Report as PDF")}
-              onExportData={() => console.log("Exporting Equity Curve Data as CSV")}
+              onExportReport={() => {}}
+              onExportData={() => {}}
             />
           </div>
-          <CardDescription className="pb-0 pt-0">
+          <CardDescription>
             {`${marketNames[market] || "Global"} Market from ${format(
               dateRange.from!,
               "MMMM d, yyyy"
@@ -277,21 +320,14 @@ export function EquityCurve({
           <ChartContainer config={chartConfig}>
             <AreaChart
               data={chartData}
-              margin={{
-                left: 12,
-                right: 12,
-                top: 10,
-                bottom: 10,
-              }}
+              margin={{ left: 12, right: 12, top: 10, bottom: 10 }}
             >
               <defs>
-                <linearGradient id="fillPositive" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.2} />
-                </linearGradient>
-                <linearGradient id="fillNegative" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FF5252" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#FF5252" stopOpacity={0.2} />
+                <linearGradient id="fillCumulative" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset={0} stopColor="#4CAF50" stopOpacity={0.8} />
+                  <stop offset={offset} stopColor="#4CAF50" stopOpacity={0.8} />
+                  <stop offset={offset} stopColor="#FF5252" stopOpacity={0.8} />
+                  <stop offset={1} stopColor="#FF5252" stopOpacity={0.8} />
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -308,22 +344,36 @@ export function EquityCurve({
                 axisLine={false}
                 tickMargin={10}
                 fontSize={12}
-                domain={yDomain}
+                domain={[minPnl - 500, maxPnl + 500]}
                 tickFormatter={(value) => value.toFixed(0)}
               />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+              <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
+              <ReferenceLine y={0} stroke="black" strokeWidth={1} />
               <Area
                 dataKey="cumulativePnl"
                 name="Cumulative P&L"
-                type="linear"
-                stroke="#4CAF50"
-                fill="url(#fillPositive)"
+                type="monotone"
+                stroke="none"
+                fill="url(#fillCumulative)"
                 fillOpacity={0.3}
-                strokeWidth={2}
                 dot={false}
-                connectNulls
                 isAnimationActive={false}
               />
+              {lineSegments.map((segment, index) => (
+                <Line
+                  key={`line-${index}`}
+                  data={segment.data}
+                  dataKey="cumulativePnl"
+                  name="Cumulative P&L"
+                  type="monotone"
+                  stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={<CustomActiveDot />}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+              ))}
             </AreaChart>
           </ChartContainer>
         </CardContent>
