@@ -5,8 +5,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, parse } from "date-fns";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { format } from "date-fns";
 import Loading from "../ui/loading";
 
 // Define interfaces
@@ -43,17 +49,20 @@ interface DayContentProps {
 
 interface TradeCalendarProps {
   accountNo: string;
-  phAccountNo: string; // Fixed typo from phAccount
+  phAccountNo: string;
   market: string;
 }
 
-export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarProps) {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(2025, 5, 1)); // June 2025
+export function TradeCalendar({
+  accountNo,
+  phAccountNo,
+  market,
+}: TradeCalendarProps) {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date(2025, 5, 1));
   const [tradeData, setTradeData] = React.useState<TradeDay[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Define fetchDailyPnl at component scope
   const fetchDailyPnl = async () => {
     setLoading(true);
     setError(null);
@@ -73,9 +82,8 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
         dateStart,
         dateEnd,
       };
-      // console.log("Fetching daily PnL with body:", requestBody);
 
-      const response = await fetch("/api/dailypnl", {
+      const response = await fetch("/api/dailypnl/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -84,25 +92,19 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Failed to fetch daily PnL (Status: ${response.status})`
+          errorData.error || `Failed to fetch daily pnl summary (Status: ${response.status})`
         );
       }
 
       const data: AccountPnl[] = await response.json();
-      // console.log("Received data for account:", requestBody.account, data);
-
-      if (!data.length) {
-        setError(`No data found for account ${requestBody.account}`);
-        setTradeData([]);
-        return;
-      }
 
       const dateMap = new Map<string, TradeDay>();
       data.forEach(({ dailyPnl }) => {
         dailyPnl.forEach(({ date, totalPnl, realizedPnl, unrealizedPnl }) => {
-          const dateStr = date;
-          const existing = dateMap.get(dateStr) || {
-            date: parse(date, "yyyy-MM-dd", new Date()),
+          const parsedDate = new Date(date); // ✅ Changed from parse()
+          const dateKey = format(parsedDate, "yyyy-MM-dd");
+          const existing = dateMap.get(dateKey) || {
+            date: parsedDate,
             totalPnl: 0,
             realizedPnl: 0,
             unrealizedPnl: 0,
@@ -112,14 +114,14 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
           existing.realizedPnl += realizedPnl;
           existing.unrealizedPnl += unrealizedPnl;
           existing.hasTrades = existing.totalPnl !== 0 ? 1 : 0;
-          dateMap.set(dateStr, existing);
+          dateMap.set(dateKey, existing);
         });
       });
 
       const aggregatedData = Array.from(dateMap.values()).sort(
         (a, b) => a.date.getTime() - b.date.getTime()
       );
-      // console.log("Aggregated trade data:", aggregatedData);
+
       setTradeData(aggregatedData);
     } catch (err: any) {
       console.error("Fetch error:", err);
@@ -129,16 +131,17 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
     }
   };
 
-  // Fetch data when currentMonth, accountNo, phAccountNo, or market changes
   React.useEffect(() => {
     fetchDailyPnl();
   }, [currentMonth, accountNo, phAccountNo, market]);
 
-  // Precompute trade data map
   const tradeDataMap = React.useMemo(() => {
     const map = new Map<string, TradeDay>();
     tradeData.forEach((trade) => {
-      map.set(format(trade.date, "yyyy-MM-dd"), trade);
+      if (trade.date instanceof Date && !isNaN(trade.date.getTime())) {
+        const key = format(trade.date, "yyyy-MM-dd");
+        map.set(key, trade);
+      }
     });
     return map;
   }, [tradeData]);
@@ -154,8 +157,16 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
 
   const { weekSummaries, numWeeks } = React.useMemo(() => {
     const weeks: WeekSummary[] = [];
-    const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const lastDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+    const firstDayOfMonth = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      1
+    );
+    const lastDayOfMonth = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + 1,
+      0
+    );
 
     const firstDayOfWeek = firstDayOfMonth.getDay();
     const startOfFirstWeek = new Date(firstDayOfMonth);
@@ -194,9 +205,9 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
   };
 
   const renderWeekSummaries = () => {
-    const rowHeight = 106; // Adjusted to match calendar row height (96px + 8px margin)
-    const dayHeaderHeight = 38; // Day headers (Sun, Mon, etc.)
-    const calendarTopPadding = 14; // pt-4
+    const rowHeight = 106;
+    const dayHeaderHeight = 38;
+    const calendarTopPadding = 14;
 
     const summaryHeader = (
       <div
@@ -238,7 +249,6 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
     return [summaryHeader, ...summaryCards];
   };
 
-  // Early returns AFTER all hooks
   if (loading) {
     return (
       <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">
@@ -251,28 +261,6 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
           </CardHeader>
           <CardContent>
             <Loading variant="calendar" className="w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">
-        <Card className="max-w-3xl w-full">
-          <CardHeader>
-            <CardTitle className="text-2xl">Daily Calendar Return</CardTitle>
-            <CardDescription>
-              Displays daily trade performance and weekly summaries for the selected month.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-red-600">
-              Error: {error}
-              <button onClick={fetchDailyPnl} className="ml-2 text-blue-600 underline">
-                Retry
-              </button>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -302,7 +290,10 @@ export function TradeCalendar({ accountNo, phAccountNo, market }: TradeCalendarP
               <ChevronLeft className="h-4 w-4" />
             </button>
             <h2 className="text-lg font-semibold">
-              {currentMonth.toLocaleString("default", { month: "long", year: "numeric" })}
+              {currentMonth.toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              })}
             </h2>
             <button
               onClick={() =>

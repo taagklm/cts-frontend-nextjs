@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockData } from "@/mock-data/daily-pnl";
 
-const useMock = true; // Keep true for testing
+const useMock = true; // Toggle true to use mock data
 
 // Handle POST requests to fetch daily pnl summary data
 export async function POST(request: Request) {
