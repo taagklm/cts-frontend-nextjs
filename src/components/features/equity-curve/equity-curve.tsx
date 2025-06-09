@@ -57,7 +57,9 @@ export function EquityCurve({
   const [error, setError] = useState<string | null>(null);
 
   const dateRange = propDateRange?.from && propDateRange?.to ? propDateRange : localDateRange;
-  const setDateRange = propSetDateRange || setLocalDateRange;
+  const setDateRange = propSetDateRange || ((range: DateRange | undefined) =>
+    setLocalDateRange(range || { from: startOfYear(new Date()), to: new Date() })
+  );
 
   const marketNames: { [key: string]: string } = {
     IB: "Global",
