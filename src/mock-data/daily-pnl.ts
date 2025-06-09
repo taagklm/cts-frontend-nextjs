@@ -40,7 +40,7 @@ export const mockData = [
     account: "U1673066",
     dailyPnl: [
       { date: "2025-01-01", totalPnl: 200.50, realizedPnl: 150.50, unrealizedPnl: 50.00 },
-      { date: "2025-01-02", totalPnl: -100.10, realizedPnl: -120.10, unrealizedPnl: 20.00 },
+      { date: "2025-01-02", totalPnl: -250.10, realizedPnl: -270.10, unrealizedPnl: 20.00 },
       { date: "2025-01-03", totalPnl: 300.20, realizedPnl: 250.20, unrealizedPnl: 50.00 },
       { date: "2025-01-04", totalPnl: 500.00, realizedPnl: 450.00, unrealizedPnl: 50.00 },
       { date: "2025-01-05", totalPnl: -50.15, realizedPnl: -70.15, unrealizedPnl: 20.00 },
