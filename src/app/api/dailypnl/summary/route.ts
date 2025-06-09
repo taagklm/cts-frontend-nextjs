@@ -55,9 +55,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return mock data if useMock is true.
+    // Return mock data if useMock is true, filtered by the specified account.
     if (useMock) {
-      return NextResponse.json(mockData);
+      const filteredMockData = mockData.filter((entry) => entry.account === body.account);
+      if (filteredMockData.length === 0) {
+        console.warn("No mock data found for account:", body.account);
+        return NextResponse.json(
+          { error: `No mock data found for account: ${body.account}` },
+          { status: 404 }
+        );
+      }
+      console.log("Returning filtered mock data for account:", body.account, filteredMockData);
+      return NextResponse.json(filteredMockData);
     }
 
     // If not using mock data, proceed with backend API call
