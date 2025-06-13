@@ -251,7 +251,7 @@ export function TradeCalendar({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-0">
+      <div className="flex items-center justify-center min-w-[48rem] pb-4">
         <Card className="max-w-3xl w-full">
           <CardHeader>
             <CardTitle className="text-2xl">Daily Calendar Return</CardTitle>
@@ -260,7 +260,10 @@ export function TradeCalendar({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Loading variant="calendar" className="w-full" />
+            <div className="w-full">
+            <Loading variant="table" rows={16} className="w-full h-full" />
+          </div>
+            
           </CardContent>
         </Card>
       </div>

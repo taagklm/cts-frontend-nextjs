@@ -184,38 +184,40 @@ export function EquityCurve({
   }, [selectedAccount, market, dateRange]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
-        <Card className="max-w-3xl w-full">
-          <CardHeader className="pb-0">
-            <div className="grid grid-cols-5">
-              <div className="col-span-4">
-                <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
-              </div>
-              <EquityBurgerMenu
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                onExportReport={() => {}}
-                onExportData={() => {}}
-                disabled
-              />
+  return (
+    <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
+      <Card className="max-w-3xl w-full">
+        <CardHeader className="pb-0">
+          <div className="grid grid-cols-5">
+            <div className="col-span-4">
+              <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
             </div>
-            <CardDescription>
-              Loading equity data for account: {selectedAccount}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Loading variant="table" rows={6} className="w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+            <EquityBurgerMenu
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              onExportReport={() => {}}
+              onExportData={() => {}}
+              disabled
+            />
+          </div>
+          <CardDescription>
+            Loading equity data for account: {selectedAccount}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
+          <div className="h-[375px] w-full">
+            <Loading variant="table" rows={9} className="w-full h-full" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
   if (error || !accountData.length) {
     return (
-      <div className="flex items-center justify-center min-w-[48rem]">
-        <Card className="max-w-3xl w-full pb-0 mb-6">
+      <div className="flex items-center justify-center w-full pb-4 pt-4">
+  <Card className="w-[48rem] min-w-[48rem] pb-0 mb-6">
           <CardHeader>
             <div className="grid grid-cols-5">
               <div className="col-span-4">
@@ -298,8 +300,8 @@ export function EquityCurve({
   const offset = maxPnl <= 0 ? 0 : minPnl >= 0 ? 1 : maxPnl / (maxPnl - minPnl);
 
   return (
-    <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
-      <Card className="max-w-3xl w-full">
+    <div className="flex items-center justify-center w-full pb-4 pt-4">
+  <Card className="w-[48rem] min-w-[48rem]">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">

@@ -81,9 +81,9 @@ export function StatsTable({
     return (
       <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
         <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-          <CardContent className="p-0 min-h-[400px]">
+          <CardContent className="p-0 min-h-[375px]">
             <div className="px-2">
-              <Loading variant="table" rows={12} className="w-full" /> {/* 12 rows for ~384px height */}
+              <Loading variant="table" rows={9} className="w-full" /> {/* 12 rows for ~384px height */}
             </div>
           </CardContent>
         </Card>

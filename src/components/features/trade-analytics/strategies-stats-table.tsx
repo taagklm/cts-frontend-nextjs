@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableRow, TableHeader } from "@/components
 import { Card, CardContent } from "@/components/ui/card";
 import Loading from "@/components/ui/loading";
 
-// Define type for TradeAnalyticsData (full Stats interface)
 interface TradeAnalyticsData {
   numberOfTrades: number;
   returnUsd?: number | null;
@@ -26,12 +25,10 @@ interface TradeAnalyticsData {
   churn?: number | null;
 }
 
-// Type for primarySetupStats
 interface PrimarySetupStats {
   [setup: string]: TradeAnalyticsData;
 }
 
-// Column mappings for all metrics
 const colMappings: Record<string, keyof TradeAnalyticsData> = {
   "Total # of Trades": "numberOfTrades",
   "Return (USD)": "returnUsd",
@@ -65,7 +62,6 @@ export function PrimarySetupStatsTable({
   const [tableData, setTableData] = useState<PrimarySetupStats | null>(null);
   const isPHMarket = selectedMarket === "PH";
 
-  // Simulate async data fetch
   useEffect(() => {
     setIsLoading(true);
     setTimeout(() => {
@@ -74,32 +70,11 @@ export function PrimarySetupStatsTable({
     }, 1000);
   }, [data, selectedMarket]);
 
-  // // Debug
-  // useEffect(() => {
-  //   console.log("PrimarySetupStatsTable loading state:", isLoading);
-  //   console.log("PrimarySetupStatsTable data:", tableData);
-  //   if (tableData) {
-  //     Object.keys(tableData).forEach((setup) => {
-  //       console.log(`Setup ${setup} data:`, tableData[setup]);
-  //       if (isPHMarket) {
-  //         console.log(
-  //           `Setup ${setup} PHP metrics:`,
-  //           {
-  //             returnPhp: tableData[setup].returnPhp,
-  //             realizedPnlPhp: tableData[setup].realizedPnlPhp,
-  //             unrealizedPnlPhp: tableData[setup].unrealizedPnlPhp,
-  //           }
-  //         );
-  //       }
-  //     });
-  //   }
-  // }, [isLoading, tableData, isPHMarket]);
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
+      <div className="flex items-center justify-center font-sans text-sm font-normal pb-3">
         <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-          <CardContent className="p-0 min-h-[400px]">
+          <CardContent className="p-0 min-h-[300px]">
             <div className="px-2">
               <Loading variant="table" rows={12} className="w-full" />
             </div>
@@ -113,7 +88,7 @@ export function PrimarySetupStatsTable({
     return (
       <div className="flex items-center justify-center font-sans text-sm font-normal pr-3 pb-3">
         <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-          <CardContent className="p-0 min-h-[400px]">
+          <CardContent className="p-0 min-h-[300px]">
             <div className="px-2">
               <div className="text-red-600">No setup data available</div>
             </div>
@@ -128,7 +103,7 @@ export function PrimarySetupStatsTable({
   return (
     <div className="flex items-center justify-center font-sans text-sm font-normal pb-3">
       <Card className="max-w-3xl w-full overflow-visible shadow-none">
-        <CardContent className="p-0">
+        <CardContent className="p-0 min-h-[300px]">
           <div className="px-2">
             <Table className="min-w-0 w-full">
               <TableHeader>
@@ -174,7 +149,7 @@ export function PrimarySetupStatsTable({
   );
 }
 
-// Color-coding logic (adapted from StatsTable)
+// Color logic
 const shouldColorCode = (colName: string, value: number | string | null) => {
   if (typeof value !== "number" || value === null) return "";
   const noColorFields = [
@@ -190,7 +165,7 @@ const shouldColorCode = (colName: string, value: number | string | null) => {
   return value < 0 ? "text-[#FF5252]" : "text-[#4CAF50]";
 };
 
-// Formatting logic (adapted from StatsTable)
+// Format logic
 const formatValue = (value: number | string | null, colName: string) => {
   if (value === null || typeof value === "undefined") return "N/A";
   if (typeof value === "string") return value;

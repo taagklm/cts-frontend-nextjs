@@ -54,9 +54,9 @@ export function WinnersTable({
     return (
       <div className="flex items-center justify-center font-sans text-sm font-normal max-w-3xl w-full mx-auto pb-3">
         <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-          <CardContent className="p-0 min-h-[200px]">
+          <CardContent className="p-0 min-h-[170px]">
             <div className="px-2">
-              <Loading variant="table" rows={5} className="w-full" />
+              <Loading variant="table" rows={4} className="w-full" />
             </div>
           </CardContent>
         </Card>
@@ -71,10 +71,10 @@ export function WinnersTable({
           <div className="px-2">
             <Table className="w-full table-fixed">
               <colgroup>
-                <col style={{ width: "36%" }} />
-                <col style={{ width: "40%" }} />
-                <col style={{ width: "24%" }} />
-              </colgroup>
+              <col style={{ width: "36%" }} />
+              <col style={{ width: "40%" }} />
+              <col style={{ width: "24%" }} />
+            </colgroup>
               <TableBody>
                 <TableRow>
                   <TableCell
