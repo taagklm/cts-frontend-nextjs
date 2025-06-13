@@ -52,11 +52,11 @@ export function WinnersTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center font-sans text-sm font-normal pb-0">
+      <div className="flex items-center justify-center font-sans text-sm font-normal max-w-3xl w-full mx-auto pb-3">
         <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-          <CardContent className="p-0">
+          <CardContent className="p-0 min-h-[200px]">
             <div className="px-2">
-              <Loading variant="table" rows={6} className="w-full" />
+              <Loading variant="table" rows={5} className="w-full" />
             </div>
           </CardContent>
         </Card>
@@ -65,11 +65,16 @@ export function WinnersTable({
   }
 
   return (
-    <div className="flex items-center justify-center font-sans text-sm font-normal pb-0">
+    <div className="flex items-center justify-center font-sans text-sm font-normal max-w-3xl w-full mx-auto pb-3">
       <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
         <CardContent className="p-0">
           <div className="px-2">
-            <Table className="min-w-0 w-full">
+            <Table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: "36%" }} />
+                <col style={{ width: "40%" }} />
+                <col style={{ width: "24%" }} />
+              </colgroup>
               <TableBody>
                 <TableRow>
                   <TableCell
@@ -79,9 +84,10 @@ export function WinnersTable({
                     TOP 5 WINNERS
                   </TableCell>
                 </TableRow>
+
                 {rows.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="text-sm font-normal text-left px-1 py-1">
+                    <TableCell className=" text-left px-1 py-1">
                       {item
                         ? new Date(item.dateEntered).toLocaleDateString("en-US", {
                             month: "short",
@@ -91,12 +97,13 @@ export function WinnersTable({
                         : "N/A"}
                     </TableCell>
                     <TableCell
-                      className={`text-sm font-normal px-1 py-1 ${
+                      className={` text-sm font-normal text-center px-1 py-1 ${
                         item && item.symbol.length === 4 ? "text-center" : "text-left"
                       }`}
                     >
                       {item ? truncateSymbol(item.symbol) : ""}
                     </TableCell>
+                    
                     <TableCell
                       className={`text-sm font-normal text-right px-1 py-1 ${
                         item && item.totalReturn < 0 ? "text-[#FF5252]" : "text-[#4CAF50]"

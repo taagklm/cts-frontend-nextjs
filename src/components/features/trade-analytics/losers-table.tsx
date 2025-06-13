@@ -74,7 +74,7 @@ export function LosersTable({
         <Card className="w-full mx-auto overflow-hidden pt-2 pb-2 shadow-none losers-card">
           <CardContent className="p-0 min-h-[200px]">
             <div className="px-2">
-              <Loading variant="table" rows={7} className="w-full" /> {/* 7 rows for ~224px height */}
+              <Loading variant="table" rows={5} className="w-full" /> {/* 7 rows for ~224px height */}
             </div>
           </CardContent>
         </Card>
@@ -87,7 +87,12 @@ export function LosersTable({
       <Card className="w-full mx-auto overflow-hidden pt-2 pb-2 shadow-none losers-card">
         <CardContent className="p-0">
           <div className="px-2">
-            <Table className="min-w-0 w-full">
+            <Table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: "36%" }} />
+                <col style={{ width: "40%" }} />
+                <col style={{ width: "24%" }} />
+              </colgroup>
               <TableBody>
                 <TableRow>
                   <TableCell
@@ -112,7 +117,7 @@ export function LosersTable({
                       {item ? truncateSymbol(item.symbol) : ""}
                     </TableCell>
                     <TableCell
-                      className={`text-sm font-normal text-right px-1 py-1 ${
+                      className={`"text-sm font-normal text-right px-1 py-1 tabular-nums ${
                         item && item.totalReturn < 0 ? "text-[#FF5252]" : "text-[#4CAF50]"
                       }`}
                     >
