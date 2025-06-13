@@ -74,7 +74,7 @@ export function PrimarySetupStatsTable({
     return (
       <div className="flex items-center justify-center font-sans text-sm font-normal pb-3">
         <Card className="max-w-3xl w-full overflow-hidden pt-2 pb-2 shadow-none">
-          <CardContent className="p-0 min-h-[300px]">
+          <CardContent className="p-0 min-h-[420px]">
             <div className="px-2">
               <Loading variant="table" rows={12} className="w-full" />
             </div>
@@ -104,11 +104,13 @@ export function PrimarySetupStatsTable({
     <div className="flex items-center justify-center font-sans text-sm font-normal pb-3">
       <Card className="max-w-3xl w-full overflow-visible shadow-none">
         <CardContent className="p-0 min-h-[300px]">
-          <div className="px-2">
-            <Table className="min-w-0 w-full">
+          <div className="px-2 overflow-auto">
+            <Table className="w-full min-w-max border-collapse">
               <TableHeader>
                 <TableRow>
-                  <TableCell className="text-sm font-semibold text-left px-1 py-1">Strategies</TableCell>
+                  <TableCell className="text-sm font-semibold text-left px-1 py-1 sticky left-0 bg-white z-10 w-40 border-r border-gray-200">
+                    Strategies
+                  </TableCell>
                   {setups.map((setup) => (
                     <TableCell key={setup} className="text-sm font-semibold text-right px-1 py-1">
                       {setup}
@@ -123,7 +125,7 @@ export function PrimarySetupStatsTable({
                     const dataKey = colMappings[colName];
                     return (
                       <TableRow key={index}>
-                        <TableCell className="text-sm font-normal text-left px-1 py-1">
+                        <TableCell className="text-sm font-normal text-left px-1 py-1 sticky left-0 bg-white  border-r border-gray-100">
                           {colName}
                         </TableCell>
                         {setups.map((setup) => {

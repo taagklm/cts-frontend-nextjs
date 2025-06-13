@@ -113,7 +113,7 @@ export function ProfitDistributionChart({ data }: { data: TradeAnalyticsDto }) {
     return (
       <Card className="mb-3 max-w-3xl w-full overflow-visible shadow-none">
         
-        <CardContent className="p-0 min-h-[430px]">
+        <CardContent className="p-0 min-h-[440px]">
           <div className="px-4">
             <Loading variant="table" rows={11} className="w-full h-[240px]" />
           </div>
