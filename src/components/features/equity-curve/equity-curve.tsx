@@ -349,31 +349,32 @@ export function EquityCurve({
               />
               <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
               <ReferenceLine y={0} stroke="black" strokeWidth={1} />
-              <Area
-                dataKey="cumulativePnl"
-                name="Cumulative P&L"
-                type="monotone"
-                stroke="none"
-                fill="url(#fillCumulative)"
-                fillOpacity={0.3}
-                dot={false}
-                isAnimationActive={false}
-              />
+             <Area
+  dataKey="cumulativePnl"
+  name="Cumulative P&L"
+  type="monotone"
+  stroke="none"
+  fill="url(#fillCumulative)"
+  fillOpacity={0.3}
+  dot={false}
+  activeDot={false}  // ← This line disables the green hover dot
+  isAnimationActive={false}
+/>
               {lineSegments.map((segment, index) => (
-                <Line
-                  key={`line-${index}`}
-                  data={segment.data}
-                  dataKey="cumulativePnl"
-                  name="Cumulative P&L"
-                  type="monotone"
-                  stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={<CustomActiveDot />}
-                  connectNulls={false}
-                  isAnimationActive={false}
-                />
-              ))}
+  <Line
+    key={`line-${index}`}
+    data={segment.data}
+    dataKey="cumulativePnl"
+    name="Cumulative P&L"
+    type="monotone"
+    stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
+    strokeWidth={3}
+    dot={false}
+    activeDot={CustomActiveDot} // ← this line changed
+    connectNulls={false}
+    isAnimationActive={false}
+  />
+))}
             </AreaChart>
           </ChartContainer>
         </CardContent>
