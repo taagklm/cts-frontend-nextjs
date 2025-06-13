@@ -82,13 +82,16 @@ const CustomTooltipContent = ({ active, payload }: any) => {
   return null;
 };
 
+const CustomDot = (props: any) => {
+  const { cx, cy, payload } = props;
+  const color = payload.cumulativePnl < 0 ? "#FF5252" : "#4CAF50";
+  return <circle cx={cx} cy={cy} r={4} fill={color} />;
+};
+
 const CustomActiveDot = (props: any) => {
   const { cx, cy, payload } = props;
   const color = payload.cumulativePnl < 0 ? "#FF5252" : "#4CAF50";
-
-  return (
-    <circle cx={cx} cy={cy} r={5} stroke="white" strokeWidth={2} fill={color} />
-  );
+  return <circle cx={cx} cy={cy} r={6} stroke="white" strokeWidth={2} fill={color} />;
 };
 
 export function EquityCurve({
@@ -357,23 +360,23 @@ export function EquityCurve({
   fill="url(#fillCumulative)"
   fillOpacity={0.3}
   dot={false}
-  activeDot={false}  // ← This line disables the green hover dot
+  activeDot={CustomActiveDot}
   isAnimationActive={false}
 />
               {lineSegments.map((segment, index) => (
   <Line
-    key={`line-${index}`}
-    data={segment.data}
-    dataKey="cumulativePnl"
-    name="Cumulative P&L"
-    type="monotone"
-    stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
-    strokeWidth={3}
-    dot={false}
-    activeDot={CustomActiveDot} // ← this line changed
-    connectNulls={false}
-    isAnimationActive={false}
-  />
+  key={`line-${index}`}
+  data={segment.data}
+  dataKey="cumulativePnl"
+  name="Cumulative P&L"
+  type="monotone"
+  stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
+  strokeWidth={3}
+  dot={false}
+  activeDot={CustomActiveDot}
+  connectNulls={false}
+  isAnimationActive={false}
+/>
 ))}
             </AreaChart>
           </ChartContainer>
