@@ -35,12 +35,13 @@ export function DatePickerWithRange({
   const currentDay = today.getDate();
   const [localError, setLocalError] = React.useState<string | null>(null);
   const [hasSelected, setHasSelected] = React.useState(false);
-  const [year, setYear] = React.useState<string | undefined>();
-  const [month, setMonth] = React.useState<string | undefined>();
-  const [day, setDay] = React.useState<string | undefined>();
-  const [hasSelectedYear, setHasSelectedYear] = React.useState(false);
-  const [hasSelectedMonth, setHasSelectedMonth] = React.useState(false);
-  const [hasSelectedDay, setHasSelectedDay] = React.useState(false);
+  // Initialize with defaults to keep Select controlled
+  const [year, setYear] = React.useState<string>(date?.getFullYear().toString() || currentYear.toString());
+  const [month, setMonth] = React.useState<string>(date?.getMonth().toString() || currentMonth.toString());
+  const [day, setDay] = React.useState<string>(date?.getDate().toString() || currentDay.toString());
+  const [hasSelectedYear, setHasSelectedYear] = React.useState(!!date);
+  const [hasSelectedMonth, setHasSelectedMonth] = React.useState(!!date);
+  const [hasSelectedDay, setHasSelectedDay] = React.useState(!!date);
 
   const years = Array.from({ length: currentYear - 2000 + 1 }, (_, i) => currentYear - i);
   const months = [
@@ -48,21 +49,17 @@ export function DatePickerWithRange({
     "July", "August", "September", "October", "November", "December",
   ];
   const availableYears = years.filter((year) => year <= currentYear);
-  const days = Array.from(
-    { length: getDaysInMonth(Number(year) || currentYear, Number(month) || currentMonth) },
-    (_, i) => i + 1
+  // Memoize days to prevent recalculation on every render
+  const days = React.useMemo(
+    () => Array.from(
+      { length: getDaysInMonth(Number(year) || currentYear, Number(month) || currentMonth) },
+      (_, i) => i + 1
+    ),
+    [year, month, currentYear, currentMonth]
   );
-
-  console.log(`DatePickerWithRange (${mode}): Initialized`, {
-    date: date?.toISOString(),
-    hasSelected,
-  });
 
   React.useEffect(() => {
     if (date && !isNaN(date.getTime())) {
-      console.log(`DatePickerWithRange (${mode}): Date Updated:`, {
-        date: date.toISOString(),
-      });
       setYear(date.getFullYear().toString());
       setMonth(date.getMonth().toString());
       setDay(date.getDate().toString());
@@ -73,10 +70,9 @@ export function DatePickerWithRange({
       setLocalError(null);
       setIsValid?.(true);
     } else {
-      console.log(`DatePickerWithRange (${mode}): Date Invalid or Undefined:`, { date });
-      setYear(undefined);
-      setMonth(undefined);
-      setDay(undefined);
+      setYear(currentYear.toString());
+      setMonth(currentMonth.toString());
+      setDay(currentDay.toString());
       setHasSelectedYear(false);
       setHasSelectedMonth(false);
       setHasSelectedDay(false);
@@ -84,33 +80,13 @@ export function DatePickerWithRange({
       setLocalError(null);
       setIsValid?.(false);
     }
-  }, [date, mode, setIsValid]);
+  }, [date, mode, setIsValid, currentYear, currentMonth, currentDay]);
 
   const handleSelect = React.useCallback(
     (selectedYear: number, selectedMonth: number, selectedDay: number) => {
-      console.log(`DatePickerWithRange (${mode}): handleSelect`, {
-        selectedYear,
-        selectedMonth,
-        selectedDay,
-      });
-
-      const finalYear = selectedYear ?? (hasSelectedYear ? Number(year) : undefined);
-      const finalMonth = selectedMonth ?? (hasSelectedMonth ? Number(month) : undefined);
-      const finalDay = selectedDay ?? (hasSelectedDay ? Number(day) : undefined);
-
-      if (finalYear === undefined || finalMonth === undefined || finalDay === undefined) {
-        setLocalError("Please select a complete date");
-        setError?.("Please select a complete date");
-        setHasSelected(false);
-        setDate(undefined);
-        setIsValid?.(false);
-        console.log(`DatePickerWithRange (${mode}): Incomplete date selected`, {
-          finalYear,
-          finalMonth,
-          finalDay,
-        });
-        return;
-      }
+      const finalYear = selectedYear ?? (hasSelectedYear ? Number(year) : currentYear);
+      const finalMonth = selectedMonth ?? (hasSelectedMonth ? Number(month) : currentMonth);
+      const finalDay = selectedDay ?? (hasSelectedDay ? Number(day) : currentDay);
 
       if (isNaN(finalYear) || isNaN(finalMonth) || isNaN(finalDay)) {
         setLocalError("Please select a valid date");
@@ -118,7 +94,6 @@ export function DatePickerWithRange({
         setHasSelected(false);
         setDate(undefined);
         setIsValid?.(false);
-        console.log(`DatePickerWithRange (${mode}): Invalid date selected`);
         return;
       }
 
@@ -131,11 +106,8 @@ export function DatePickerWithRange({
       setMonth(finalMonth.toString());
       setDay(finalDay.toString());
       setIsValid?.(true);
-      console.log(`DatePickerWithRange (${mode}): Date selected`, {
-        normalizedDate: normalizedDate.toISOString(),
-      });
     },
-    [mode, setError, setDate, year, month, day, hasSelectedYear, hasSelectedMonth, hasSelectedDay, setIsValid]
+    [mode, setError, setDate, year, month, day, hasSelectedYear, hasSelectedMonth, hasSelectedDay, setIsValid, currentYear, currentMonth, currentDay]
   );
 
   return (
@@ -151,10 +123,9 @@ export function DatePickerWithRange({
             let newDay = Number(day) ?? currentDay;
             if (newYear === currentYear && newMonth > currentMonth) {
               newMonth = currentMonth;
-              newDay = currentDay;
               setMonth(newMonth.toString());
-              setDay(newDay.toString());
-            } else if (newYear === currentYear && newMonth === currentMonth && newDay > currentDay) {
+            }
+            if (newYear === currentYear && newMonth === currentMonth && newDay > currentDay) {
               newDay = currentDay;
               setDay(newDay.toString());
             }
@@ -163,7 +134,6 @@ export function DatePickerWithRange({
               newDay = maxDays;
               setDay(newDay.toString());
             }
-            console.log(`Custom ${mode} Year Select:`, { value: newYear, month: newMonth, day: newDay });
             handleSelect(newYear, newMonth, newDay);
           }}
         >
@@ -194,7 +164,6 @@ export function DatePickerWithRange({
               newDay = maxDays;
               setDay(newDay.toString());
             }
-            console.log(`Custom ${mode} Month Select:`, { value: newMonth, day: newDay });
             handleSelect(Number(year) || currentYear, newMonth, newDay);
           }}
         >
@@ -219,7 +188,6 @@ export function DatePickerWithRange({
             const newDay = parseInt(value);
             setDay(value);
             setHasSelectedDay(true);
-            console.log(`Custom ${mode} Day Select:`, { value: newDay });
             handleSelect(Number(year) || currentYear, Number(month) || currentMonth, newDay);
           }}
         >
