@@ -27,8 +27,15 @@ export function EquityRange({
   const [error, setError] = React.useState<string | null>(null);
   const today = normalizeDateToUTC(new Date());
 
+  // Update dateRange only when fromDate/toDate are valid and different
   React.useEffect(() => {
-    if (fromDate && toDate && !isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
+    if (
+      fromDate &&
+      toDate &&
+      !isNaN(fromDate.getTime()) &&
+      !isNaN(toDate.getTime()) &&
+      (!dateRange?.from || !dateRange?.to || fromDate.getTime() !== dateRange.from.getTime() || toDate.getTime() !== dateRange.to.getTime())
+    ) {
       if (isAfter(fromDate, toDate)) {
         setError("End date cannot be earlier than start date");
         setIsToValid(false);
@@ -44,25 +51,17 @@ export function EquityRange({
         from: newDateRange.from?.toISOString(),
         to: newDateRange.to?.toISOString(),
       });
-    } else {
+    } else if (!fromDate || !toDate || isNaN(fromDate?.getTime()) || isNaN(toDate?.getTime())) {
       setDateRange(undefined);
-      setIsFromValid(!!fromDate && !isNaN(fromDate.getTime()));
-      setIsToValid(!!toDate && !isNaN(toDate.getTime()));
+      setIsFromValid(!!fromDate && !isNaN(fromDate?.getTime()));
+      setIsToValid(!!toDate && !isNaN(toDate?.getTime()));
       console.log("EquityRange: Date range set to undefined", { fromDate, toDate });
     }
-  }, [fromDate, toDate, setDateRange]);
+  }, [fromDate, toDate, dateRange, setDateRange]);
 
   const isDateRangeComplete = () => {
-    if (!fromDate || !toDate) {
-      console.log("EquityRange: Date range incomplete", { fromDate, toDate });
-      return false;
-    }
-    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-      console.log("EquityRange: Invalid date objects", { fromDate, toDate });
-      return false;
-    }
-    if (isAfter(fromDate, toDate)) {
-      console.log("EquityRange: Invalid range (To before From)", { fromDate, toDate });
+    if (!fromDate || !toDate || isNaN(fromDate.getTime()) || isNaN(toDate.getTime()) || isAfter(fromDate, toDate)) {
+      console.log("EquityRange: Date range incomplete or invalid", { fromDate, toDate });
       return false;
     }
     return true;
@@ -73,17 +72,17 @@ export function EquityRange({
       e.stopPropagation();
       console.log("EquityRange: handleApplyFilters:", { fromDate, toDate, isFromValid, isToValid });
       if (!isFromValid || !isToValid || !isDateRangeComplete()) {
+        setError("Please select a valid date range.");
         console.log("EquityRange: Apply Filters blocked", {
           isFromValid,
           isToValid,
           isDateRangeComplete: isDateRangeComplete(),
         });
-        window.alert("Please select a valid date range.");
         return;
       }
       onApplyFilters();
     },
-    [fromDate, toDate, isFromValid, isToValid, onApplyFilters]
+    [fromDate, toDate, isFromValid, isToValid, onApplyFilters, setError]
   );
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Area,
   AreaChart,
@@ -115,6 +115,10 @@ export function EquityCurve({
     setLocalDateRange(range || { from: startOfYear(new Date()), to: new Date() })
   );
 
+  // Memoize callback props
+  const onExportReport = useCallback(() => {}, []);
+  const onExportData = useCallback(() => {}, []);
+
   const marketNames: { [key: string]: string } = {
     IB: "Global",
     US: "United States",
@@ -184,40 +188,40 @@ export function EquityCurve({
   }, [selectedAccount, market, dateRange]);
 
   if (isLoading) {
-  return (
-    <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
-      <Card className="max-w-3xl w-full">
-        <CardHeader className="pb-0">
-          <div className="grid grid-cols-5">
-            <div className="col-span-4">
-              <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
+    return (
+      <div className="flex items-center justify-center min-w-[48rem] pb-4 pt-4">
+        <Card className="max-w-3xl w-full">
+          <CardHeader className="pb-0">
+            <div className="grid grid-cols-5">
+              <div className="col-span-4">
+                <CardTitle className="text-2xl font-semibold">Equity Curve</CardTitle>
+              </div>
+              <EquityBurgerMenu
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                onExportReport={onExportReport}
+                onExportData={onExportData}
+                disabled
+              />
             </div>
-            <EquityBurgerMenu
-              dateRange={dateRange}
-              setDateRange={setDateRange}
-              onExportReport={() => {}}
-              onExportData={() => {}}
-              disabled
-            />
-          </div>
-          <CardDescription>
-            Loading equity data for account: {selectedAccount}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
-          <div className="h-[375px] w-full">
-            <Loading variant="table" rows={9} className="w-full h-full" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+            <CardDescription>
+              Loading equity data for account: {selectedAccount}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="rounded-lg border bg-card text-card-foreground mr-6 ml-6 mt-0 mb-0 shadow-none">
+            <div className="h-[375px] w-full">
+              <Loading variant="table" rows={9} className="w-full h-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (error || !accountData.length) {
     return (
       <div className="flex items-center justify-center w-full pb-4 pt-4">
-  <Card className="w-[48rem] min-w-[48rem] pb-0 mb-6">
+        <Card className="w-[48rem] min-w-[48rem] pb-0 mb-6">
           <CardHeader>
             <div className="grid grid-cols-5">
               <div className="col-span-4">
@@ -226,8 +230,8 @@ export function EquityCurve({
               <EquityBurgerMenu
                 dateRange={dateRange}
                 setDateRange={setDateRange}
-                onExportReport={() => {}}
-                onExportData={() => {}}
+                onExportReport={onExportReport}
+                onExportData={onExportData}
               />
             </div>
             <CardDescription>
@@ -301,7 +305,7 @@ export function EquityCurve({
 
   return (
     <div className="flex items-center justify-center w-full pb-4 pt-4">
-  <Card className="w-[48rem] min-w-[48rem]">
+      <Card className="w-[48rem] min-w-[48rem]">
         <CardHeader className="pb-0">
           <div className="grid grid-cols-5">
             <div className="col-span-4">
@@ -310,8 +314,8 @@ export function EquityCurve({
             <EquityBurgerMenu
               dateRange={dateRange}
               setDateRange={setDateRange}
-              onExportReport={() => {}}
-              onExportData={() => {}}
+              onExportReport={onExportReport}
+              onExportData={onExportData}
             />
           </div>
           <CardDescription>
@@ -354,32 +358,32 @@ export function EquityCurve({
               />
               <ChartTooltip cursor={false} content={<CustomTooltipContent />} />
               <ReferenceLine y={0} stroke="black" strokeWidth={1} />
-             <Area
-  dataKey="cumulativePnl"
-  name="Cumulative P&L"
-  type="monotone"
-  stroke="none"
-  fill="url(#fillCumulative)"
-  fillOpacity={0.3}
-  dot={false}
-  activeDot={CustomActiveDot}
-  isAnimationActive={false}
-/>
+              <Area
+                dataKey="cumulativePnl"
+                name="Cumulative P&L"
+                type="monotone"
+                stroke="none"
+                fill="url(#fillCumulative)"
+                fillOpacity={0.3}
+                dot={false}
+                activeDot={CustomActiveDot}
+                isAnimationActive={false}
+              />
               {lineSegments.map((segment, index) => (
-  <Line
-  key={`line-${index}`}
-  data={segment.data}
-  dataKey="cumulativePnl"
-  name="Cumulative P&L"
-  type="monotone"
-  stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
-  strokeWidth={3}
-  dot={false}
-  activeDot={CustomActiveDot}
-  connectNulls={false}
-  isAnimationActive={false}
-/>
-))}
+                <Line
+                  key={`line-${index}`}
+                  data={segment.data}
+                  dataKey="cumulativePnl"
+                  name="Cumulative P&L"
+                  type="monotone"
+                  stroke={segment.isPositive ? "#4CAF50" : "#FF5252"}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={CustomActiveDot}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+              ))}
             </AreaChart>
           </ChartContainer>
         </CardContent>

@@ -16,7 +16,7 @@ type EquityBurgerMenuProps = {
   onExportData?: () => void;
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
-  disabled?: boolean; // Added disabled prop
+  disabled?: boolean;
 };
 
 export function EquityBurgerMenu({
@@ -24,7 +24,7 @@ export function EquityBurgerMenu({
   onExportData = () => console.log("Exporting Data as CSV"),
   dateRange,
   setDateRange,
-  disabled = false, // Default to false
+  disabled = false,
 }: EquityBurgerMenuProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -53,21 +53,25 @@ export function EquityBurgerMenu({
     setIsSheetOpen(false);
   }, [dateRange]);
 
+  // Debug re-renders
   useEffect(() => {
-    if (isSheetOpen || isDropdownOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    console.log("EquityBurgerMenu re-rendered", { isSheetOpen, isDropdownOpen });
+  }, [isSheetOpen, isDropdownOpen]);
+
+  // Manage body overflow client-side
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const bodyOverflow = isSheetOpen || isDropdownOpen ? "hidden" : "";
+    document.body.style.overflow = bodyOverflow;
     return () => {
       document.body.style.overflow = "";
     };
   }, [isSheetOpen, isDropdownOpen]);
 
-  const handleMenuTriggerClick = (e: React.MouseEvent) => {
+  const handleMenuTriggerClick = useCallback((e: React.MouseEvent) => {
     console.log("Equity burger menu trigger clicked");
     e.stopPropagation();
-  };
+  }, []);
 
   return (
     <div className="col-span-1 flex justify-end">
